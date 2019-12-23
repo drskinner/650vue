@@ -10,7 +10,7 @@ export default new Vuex.Store({
       xr: 0x02,
       yr: 0x03,
       sp: 0xFD,
-      sr: 0x04,
+      sr: Math.floor(Math.random() * 256),
       pc: 0x0001
     },
     ram: Array(65536).fill(0x00)
@@ -20,8 +20,9 @@ export default new Vuex.Store({
   actions: {
   },
   getters: {
-    getRegister: state => register => state.cpu[register],
-    getMemory: state => address => state.ram[address]
+    flagStatus: (state) => (flag) => {
+      return (state.cpu.sr & flag) > 0;
+    }
   },
   modules: {
   }
