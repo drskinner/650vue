@@ -11,11 +11,14 @@ export default new Vuex.Store({
       yr: 0x03,
       sp: 0xFD,
       sr: Math.floor(Math.random() * 256),
-      pc: 0x0001
+      pc: 0x0000
     },
     ram: Array(65536).fill(0x00)
   },
   mutations: {
+    incrementPc (state) {
+      state.cpu.pc++;
+    }
   },
   actions: {
   },
