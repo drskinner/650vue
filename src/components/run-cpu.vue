@@ -5,11 +5,12 @@
     <button @click="run">RUN</button>
     <button @click="step">STEP</button>
     <button @click="stop">STOP</button>
+    <button @click="reset">RESET</button>
   </div>
 </template>
 
 <script>
-//import store from '@/store/index'
+import store from '@/store/index'
 
 export default {
   data() {
@@ -25,12 +26,15 @@ export default {
       }
     },
     step() {
-      this.$store.commit('incrementPc');
+      store.commit('incrementPc');
       this.cycles++;
     },
     stop() {
       clearInterval(this.timer);
       this.timer = null;
+    },
+    reset() {
+      store.dispatch('resetCpu');
     }
   }
 }
