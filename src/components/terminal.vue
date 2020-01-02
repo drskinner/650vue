@@ -2,8 +2,7 @@
   <div>
     <h2>TERMINAL</h2>
     <pre v-html="output"></pre>
-    <input id="command" v-model="command" maxlength="40" />
-    <button @click="send">SEND</button>
+    <input id="command" :class="active" maxlength="40" v-model="command" v-on:keyup.enter="send" />
   </div>
 </template>
 
@@ -25,6 +24,9 @@ export default {
   computed: {
     output() {
       return this.monitor.join("\n");
+    },
+    active() {
+      return store.state.isRunning ? 'inactive' : 'active';
     },
     ...mapState(['isRunning'])
   },
@@ -157,6 +159,9 @@ export default {
       store.commit('setIsRunning', true);
     },
     send() {
+      if (store.state.isRunning) {
+        return;
+      }
       this.outputLine(`<span style="color:yellow;">${this.command}</span>`);
       // switch block?
       if (this.command[0] === 'g') {
@@ -190,5 +195,21 @@ export default {
     padding: 3px 0 0 5px;
     background-color: black;
     color: lime;
+  }
+
+  input {
+    font-family: monospace, sans-serif;
+    font-size: 100%;
+    width: 391px;
+    padding: 3px 0 0 5px;
+    color: yellow;
+  }
+
+  input.active {
+    background-color: black;
+  }
+
+  input.inactive {
+    background-color: #580000;
   }
 </style>
