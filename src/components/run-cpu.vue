@@ -53,3 +53,13 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+button {
+  border: none;
+  background: url('../assets/button.png') no-repeat top left;
+  width: 58px;
+  height: 58px;
+  font-weight: bold;
+}
+</style>
