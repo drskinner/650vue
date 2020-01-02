@@ -1,5 +1,6 @@
 <template>
   <div>
+    <h2>CONTROL</h2>
     Cycles: {{ cycles }}
     <!-- TODO: Contextually disable buttons -->
     <button @click="run">RUN</button>

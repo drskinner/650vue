@@ -17,8 +17,10 @@ export default new Vuex.Store({
   },
   mutations: {
     resetPc(state) {
-      state.cpu.pc = (state.ram[0xffdd] * 0x100) + state.ram[0xffdc];
+      state.cpu.pc = (state.ram[0xfffd] * 0x100) + state.ram[0xfffc];
     },
+    // Reset _could_ actually JMP to the reset vector like it's meant to,
+    // and then some code in "ROM" could initialize the registers.
     resetRegisters({ cpu }) {
       cpu.ac = 0x00;
       cpu.xr = 0x00;
@@ -35,9 +37,16 @@ export default new Vuex.Store({
     // Subtracting 0x01 is equivalent to adding 0xff with a subsequent mask.
     decrementRegister({ cpu }, register) {
       cpu[register] = (cpu[register] + 0xff) & 0xff;
+    },
+    writeRegister({ cpu }, data) {
+      cpu[data.register] = data.value;
+    },
+    writeRam({ ram }, data) {
+      ram[data.address] = data.value;
     }
     // TODO:
     // * set and clear individual status flags
+    // * set individual registers
     // * write to ram
     // * push/pull to stack
   },

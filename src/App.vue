@@ -2,9 +2,10 @@
   <div id="app">
     <img src="@/assets/650vue_logo.png">
     <DisplayPanel />
-    <hr>
-    <DebugFlags />
     <RunCpu />
+    <hr>
+    <Terminal />
+    <DebugFlags />
   </div>
 </template>
 
@@ -12,13 +13,15 @@
 import DebugFlags from '@/components/debug-flags'
 import DisplayPanel from './components/display-panel.vue'
 import RunCpu from './components/run-cpu.vue'
+import Terminal from './components/terminal.vue'
 
 export default {
   name: 'app',
   components: {
     DebugFlags,
     DisplayPanel,
-    RunCpu
+    RunCpu,
+    Terminal
   }
 }
 </script>
