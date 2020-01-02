@@ -1,11 +1,17 @@
 <template>
   <div id="app">
-    <img src="@/assets/650vue_logo.png">
-    <DisplayPanel />
-    <RunCpu />
-    <hr>
-    <Terminal />
-    <DebugFlags />
+    <div class="row">
+    <div class="column-left">
+      <img src="@/assets/650vue_logo.png">
+      <DisplayPanel />
+      <RunCpu />
+    </div>
+    <div class="column-right">
+      <Terminal />
+      <hr>
+      <DebugFlags />
+    </div>
+    </div>
   </div>
 </template>
 
@@ -34,5 +40,18 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.row {
+  display: flex;
+}
+
+.column-left {
+  flex: 60%;
+  padding-right: 20px;
+}
+
+.column-right {
+  flex: 40%;
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
   <div>
     <h2>TERMINAL</h2>
-    <input id="command" v-model="command" maxlength="40" /><br>
-    <button @click="send">SEND</button>
     <pre v-html="output"></pre>
+    <input id="command" v-model="command" maxlength="40" />
+    <button @click="send">SEND</button>
   </div>
 </template>
 
