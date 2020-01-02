@@ -9,6 +9,7 @@
 
 <script>
 import store from '@/store/index'
+import { mapState } from 'vuex';
 
 export default {
   name: 'Terminal',
@@ -24,6 +25,14 @@ export default {
   computed: {
     output() {
       return this.monitor.join("\n");
+    },
+    ...mapState(['isRunning'])
+  },
+  watch: {
+    isRunning: function (newValue, oldValue) {
+      if (newValue === false && oldValue === true) {
+        this.showRegisters();
+      }
     }
   },
   methods: {
@@ -135,11 +144,23 @@ export default {
       this.showRegisters();
       return;
     },
+    run() {
+      let parts = this.command.split(' ');
+
+      if (!parts[1]) {
+        this.error();
+        return;
+      }
+
+      store.commit('writeRegister',
+              { register: 'pc', value: this.stringToWord(parts[1]) });
+      store.commit('setIsRunning', true);
+    },
     send() {
       this.outputLine(`<span style="color:yellow;">${this.command}</span>`);
       // switch block?
       if (this.command[0] === 'g') {
-        this.outputLine('Go where?');
+        this.run();
       } else if (this.command[0] === 'm') {
         this.showMemory();
       } else if (this.command[0] === 'r') {
@@ -149,7 +170,7 @@ export default {
       } else if (this.command[0] === ';') {
         this.setRegisters();
       } else {
-        this.outputLine('?');
+        this.error();
       }
       this.command = '';
     }

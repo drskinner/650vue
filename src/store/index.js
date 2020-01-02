@@ -13,9 +13,13 @@ export default new Vuex.Store({
       sr: Math.floor(Math.random() * 256),
       pc: Math.floor(Math.random() * 65536)
     },
-    ram: Array(65536).fill(0x00)
+    ram: Array(65536).fill(0x00),
+    isRunning: false
   },
   mutations: {
+    setIsRunning(state, running) {
+      state.isRunning = running;
+    },
     resetPc(state) {
       state.cpu.pc = (state.ram[0xfffd] * 0x100) + state.ram[0xfffc];
     },
