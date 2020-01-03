@@ -15,7 +15,7 @@ export default {
   data() {
     return {
       command: '',
-      monitor: Array(24).fill('')
+      monitor: Array(20).fill('')
     }
   },
   created() {

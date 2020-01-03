@@ -50,6 +50,15 @@ export const execute = {
       store.commit('incrementPc');
       return store.state.cpu.pc;
     },
+    // In absolute mode, the operand is a little-endian 2-byte address.
+    absolute() {
+      store.commit('incrementPc');
+      let lo = store.state.ram[store.state.cpu.pc];
+      store.commit('incrementPc');
+      let hi = store.state.ram[store.state.cpu.pc];
+
+      return hi * 0x0100 + lo;
+    },
     //
     // OPCODES
     //
@@ -61,13 +70,30 @@ export const execute = {
       store.commit('decrementRegister', 'xr');
       this.znFlags(store.state.cpu.xr);
     },
+    DEY() {
+      store.commit('decrementRegister', 'yr');
+      this.znFlags(store.state.cpu.yr);
+    },
     INX() {
       store.commit('incrementRegister', 'xr');
       this.znFlags(store.state.cpu.xr);
     },
+    INY() {
+      store.commit('incrementRegister', 'yr');
+      this.znFlags(store.state.cpu.yr);
+    },
+    LDA(address) {
+      console.log(address);
+      store.commit('writeRegister', { register: 'ac', value: store.state.ram[address] });
+      this.znFlags(store.state.cpu.ac);
+    },
     LDX(address) {
       store.commit('writeRegister', { register: 'xr', value: store.state.ram[address] });
       this.znFlags(store.state.cpu.xr);
+    },
+    LDY(address) {
+      store.commit('writeRegister', { register: 'yr', value: store.state.ram[address] });
+      this.znFlags(store.state.cpu.yr);
     }
   }
 }
