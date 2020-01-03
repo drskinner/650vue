@@ -14,13 +14,14 @@
 <script>
 import store from '@/store/index'
 import { mapState } from 'vuex';
+import { execute } from "@/mixins/execute.js";
 
 export default {
+  mixins: [execute],
   data() {
     return {
       cycles: 0,
       timer: null,
-      // running: false
     }
   },
   watch: {
@@ -33,14 +34,11 @@ export default {
   computed: mapState(['isRunning']),
   methods: {
     run() {
+      this.cycles = 0;
       store.commit('setIsRunning', true);
       if (!this.timer) {
         this.timer = setInterval(() => this.step(), 10);
       }
-    },
-    step() {
-      store.commit('incrementPc');
-      this.cycles++;
     },
     stop() {
       store.commit('setIsRunning', false);

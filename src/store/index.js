@@ -47,10 +47,14 @@ export default new Vuex.Store({
     },
     writeRam({ ram }, data) {
       ram[data.address] = data.value;
-    }
+    },
+    setFlag({ cpu }, flag) {
+      cpu.sr |= flag;
+    },
+    clearFlag({ cpu }, flag) {
+      cpu.sr &= (~flag & 0xff);
+    },
     // TODO:
-    // * set and clear individual status flags
-    // * set individual registers
     // * write to ram
     // * push/pull to stack
   },
