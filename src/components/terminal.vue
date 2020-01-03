@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h2>TERMINAL</h2>
     <pre v-html="output"></pre>
     <input id="command" :class="active" maxlength="40" v-model="command" v-on:keyup.enter="send" />
   </div>
@@ -104,10 +103,11 @@ export default {
       // rewrite with shift or similar? (see Ruby 6502)
       // loop through additional parts
       for (let i = 0; i < (parts.length - 2); i += 1) {
-      store.commit('writeRam', { address: startAddress + i, 
-                                 value: this.stringToByte(parts[2 + i]) });
+        store.commit('writeRam', { address: startAddress + i,
+                                  value: this.stringToByte(parts[2 + i]) });
       }
 
+      store.dispatch('refreshVideo');
       return;
     },
     showRegisters() {
@@ -186,12 +186,13 @@ export default {
 <style scoped>
   div {
     text-align: left;
+    padding-bottom: 10px;
   }
 
   pre {
     font-family: monospace, sans-serif;
     font-size: 100%;
-    width: 395px;
+    width: 390px;
     padding: 3px 0 0 5px;
     background-color: black;
     color: lime;
@@ -200,7 +201,7 @@ export default {
   input {
     font-family: monospace, sans-serif;
     font-size: 100%;
-    width: 391px;
+    width: 386px;
     padding: 3px 0 0 5px;
     color: yellow;
   }

@@ -94,6 +94,9 @@ export const execute = {
     LDY(address) {
       store.commit('writeRegister', { register: 'yr', value: store.state.ram[address] });
       this.znFlags(store.state.cpu.yr);
+    },
+    STA(address) {
+      store.commit('writeRam', { address: address, value: store.state.cpu.ac });
     }
   }
 }

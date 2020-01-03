@@ -2,6 +2,7 @@ export const opcodes = new Map(
   [
     [0x00, { opcode: 'BRK', bytes: 1, cycles: 7, mode: 'implied' }],
     [0x88, { opcode: 'DEY', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x8d, { opcode: 'STA', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xa0, { opcode: 'LDY', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xa2, { opcode: 'LDX', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xa9, { opcode: 'LDA', bytes: 2, cycles: 2, mode: 'immediate' }],

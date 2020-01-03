@@ -14,11 +14,20 @@ export default new Vuex.Store({
       pc: Math.floor(Math.random() * 65536)
     },
     ram: Array(65536).fill(0x00),
-    isRunning: false
+    isRunning: false,
+    videoChecksum: 0
   },
   mutations: {
     setIsRunning(state, running) {
       state.isRunning = running;
+    },
+    updateVideoChecksum(state) {
+      let checksum = 0;
+      for (let i = 0x1000; i < 0x1280; i += 1) {
+        checksum += state.ram[i];
+        console.log(i, state.ram[i], checksum);
+      }
+      state.videoChecksum = checksum;
     },
     resetPc(state) {
       state.cpu.pc = (state.ram[0xfffd] * 0x100) + state.ram[0xfffc];
@@ -55,13 +64,15 @@ export default new Vuex.Store({
       cpu.sr &= (~flag & 0xff);
     },
     // TODO:
-    // * write to ram
     // * push/pull to stack
   },
   actions: {
     resetCpu({ commit }) { // destructured shorthand for context.commit
       commit('resetRegisters');
       commit('resetPc');
+    },
+    refreshVideo({ commit }) {
+      commit('updateVideoChecksum');
     }
   },
   getters: {

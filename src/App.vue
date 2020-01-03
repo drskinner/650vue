@@ -7,6 +7,7 @@
       <RunCpu />
     </div>
     <div class="column-right">
+      <Video />
       <Terminal />
       <hr>
       <DebugFlags />
@@ -20,6 +21,7 @@ import DebugFlags from '@/components/debug-flags'
 import DisplayPanel from './components/display-panel.vue'
 import RunCpu from './components/run-cpu.vue'
 import Terminal from './components/terminal.vue'
+import Video from '@/components/video'
 
 export default {
   name: 'app',
@@ -27,7 +29,8 @@ export default {
     DebugFlags,
     DisplayPanel,
     RunCpu,
-    Terminal
+    Terminal,
+    Video
   }
 }
 </script>
@@ -39,7 +42,7 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 20px;
 }
 
 .row {
@@ -47,11 +50,11 @@ export default {
 }
 
 .column-left {
-  flex: 60%;
-  padding-right: 20px;
+  flex: 50%;
+  padding-left: 20px;
 }
 
 .column-right {
-  flex: 40%;
+  flex: 50%;
 }
 </style>

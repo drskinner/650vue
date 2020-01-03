@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h2>CONTROL</h2>
     Cycles: {{ cycles }}
     <!-- TODO: Contextually disable buttons -->
     <button @click="run">RUN</button>
@@ -44,6 +43,7 @@ export default {
       store.commit('setIsRunning', false);
       clearInterval(this.timer);
       this.timer = null;
+      store.dispatch('refreshVideo');
     },
     reset() {
       store.dispatch('resetCpu');
