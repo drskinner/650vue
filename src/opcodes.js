@@ -9,6 +9,7 @@ export const opcodes = new Map(
     [0xad, { opcode: 'LDA', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xc8, { opcode: 'INY', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xca, { opcode: 'DEX', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xd0, { opcode: 'BNE', bytes: 2, cycles: 2, mode: 'relative' }],
     [0xe8, { opcode: 'INX', bytes: 1, cycles: 2, mode: 'implied' }]
   ]
 );

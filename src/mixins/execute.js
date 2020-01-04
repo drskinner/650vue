@@ -34,6 +34,10 @@ export const execute = {
         store.commit('setFlag', constants.flags.SR_NEGATIVE);
       }
     },
+    // Two's complement by hand...
+    byteToSignedInt(signedByte) {
+      return (signedByte & 0x80) ? -((signedByte ^ 0xff) + 1) : signedByte;
+    },
     //
     // ADDRESS MODES
     // Each instruction calls an "address mode" function
@@ -50,6 +54,12 @@ export const execute = {
       store.commit('incrementPc');
       return store.state.cpu.pc;
     },
+    // Relative mode, like immediate mode, will use the byte after
+    // the opcode as its operand.
+    relative() {
+      store.commit('incrementPc');
+      return store.state.cpu.pc;
+    },
     // In absolute mode, the operand is a little-endian 2-byte address.
     absolute() {
       store.commit('incrementPc');
@@ -62,6 +72,19 @@ export const execute = {
     //
     // OPCODES
     //
+    // TODO: cycle penalty if branch taken or page boundary crossed
+    BEQ(address) {
+      if (store.getters.flagStatus(constants.flags.SR_ZERO)) {
+        let target = store.state.cpu.pc + this.byteToSignedInt(store.state.ram[address]);
+        store.commit('writeRegister', { register: 'pc', value: target });
+      }
+    },
+    BNE(address) {
+      if (!store.getters.flagStatus(constants.flags.SR_ZERO)) {
+        let target = store.state.cpu.pc + this.byteToSignedInt(store.state.ram[address]);
+        store.commit('writeRegister', { register: 'pc', value: target });
+      }
+    },
     BRK() {
       store.commit('setFlag', constants.flags.SR_BREAK);
       this.stop();
@@ -83,7 +106,6 @@ export const execute = {
       this.znFlags(store.state.cpu.yr);
     },
     LDA(address) {
-      console.log(address);
       store.commit('writeRegister', { register: 'ac', value: store.state.ram[address] });
       this.znFlags(store.state.cpu.ac);
     },

@@ -28,7 +28,6 @@ export default {
   },
   watch: {
     videoChecksum: function (newValue, oldValue) {
-      console.log(newValue, oldValue);
       if (newValue != oldValue) {
         this.refresh();
       }

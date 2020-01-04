@@ -25,7 +25,6 @@ export default new Vuex.Store({
       let checksum = 0;
       for (let i = 0x1000; i < 0x1280; i += 1) {
         checksum += state.ram[i];
-        console.log(i, state.ram[i], checksum);
       }
       state.videoChecksum = checksum;
     },
