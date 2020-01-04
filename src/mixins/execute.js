@@ -19,6 +19,7 @@ export const execute = {
       this[instruction.opcode](address);
       this.cycles += instruction.cycles;
       store.commit('incrementPc');
+      store.dispatch('refreshVideo');
     },
     // Instructions that could result in a zero or negative
     // must set the Z and N status flags correctly.
@@ -69,6 +70,19 @@ export const execute = {
 
       return hi * 0x0100 + lo;
     },
+    // In absolute_x, the X register is added to the 2-byte address to get the
+    // target address. Overflow addresses "wrap around" from 0xffff to 0x0000.
+    //
+    // TODO: when the calculated address is on a different page from the operand
+    // address, the instruction will require an extra clock cycle to execute.
+    absoluteX() {
+      store.commit('incrementPc');
+      let lo = store.state.ram[store.state.cpu.pc];
+      store.commit('incrementPc');
+      let hi = store.state.ram[store.state.cpu.pc];
+
+      return (hi * 0x0100 + lo + store.state.cpu.xr) & 0xffff;
+    },
     //
     // OPCODES
     //
@@ -104,6 +118,11 @@ export const execute = {
     INY() {
       store.commit('incrementRegister', 'yr');
       this.znFlags(store.state.cpu.yr);
+    },
+    // Because step() will increment the PC, we'll
+    // JMP to address - 1.
+    JMP(address) {
+      store.commit('writeRegister', { register: 'pc', value: address - 1 });
     },
     LDA(address) {
       store.commit('writeRegister', { register: 'ac', value: store.state.ram[address] });
