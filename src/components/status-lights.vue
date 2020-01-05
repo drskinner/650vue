@@ -1,14 +1,30 @@
 <template>
   <div class="status-panel">
     <img class="flags" src="@/assets/status_flags.png">
-    <img class="light" :src="require(`@/assets/led_${bits[0]}.png`)">
-    <img class="light" :src="require(`@/assets/led_${bits[1]}.png`)">
-    <img class="light" :src="require(`@/assets/led_${bits[2]}.png`)">
-    <img class="light" :src="require(`@/assets/led_${bits[3]}.png`)">
-    <img class="light" :src="require(`@/assets/led_${bits[4]}.png`)">
-    <img class="light" :src="require(`@/assets/led_${bits[5]}.png`)">
-    <img class="light" :src="require(`@/assets/led_${bits[6]}.png`)">
-    <img class="light" :src="require(`@/assets/led_${bits[7]}.png`)">
+    <span class="light-box">
+      <img class="light" :src="require(`@/assets/led_${bits[0]}.png`)">
+    </span>
+    <span class="light-box">
+      <img class="light" :src="require(`@/assets/led_${bits[1]}.png`)">
+    </span>
+    <span class="light-box">
+      <img class="light" :src="require(`@/assets/led_${bits[2]}.png`)">
+    </span>
+    <span class="light-box">
+      <img class="light" :src="require(`@/assets/led_${bits[3]}.png`)">
+    </span>
+    <span class="light-box">
+      <img class="light" :src="require(`@/assets/led_${bits[4]}.png`)">
+    </span>
+    <span class="light-box">
+      <img class="light" :src="require(`@/assets/led_${bits[5]}.png`)">
+    </span>
+    <span class="light-box">
+      <img class="light" :src="require(`@/assets/led_${bits[6]}.png`)">
+    </span>
+    <span class="light-box">
+      <img class="light" :src="require(`@/assets/led_${bits[7]}.png`)">
+    </span>
   </div>
 </template>
 
@@ -24,21 +40,23 @@ export default {
 
 <style scoped>
   div {
-    width: 480px;
+    width: 488px;
     margin: auto;
     background-color: #241f21;
   }
 
-  span {
+  img.flags {
+    width: 100%;
+    height: 24px;
+  }
+
+  span.light-box {
     width: 12.5%;
     display: inline-block;
   }
 
-  img.flags {
-    width: 100%;
-  }
-
   img.light {
-    width: 12.5%;
+    width: 45px;
+    height: 48px;
   }
 </style>

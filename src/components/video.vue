@@ -19,8 +19,7 @@ export default {
     this.refresh();
   },
   computed: {
-    output() {
-            console.log(this.display);
+    output() { // No longer used
       return this.display.join("\n");
 
     },
@@ -39,10 +38,10 @@ export default {
     },
     refresh() {
       let lines = [];
-      for (let i = 0; i < 16; i += 1) {
+      for (let i = 0; i < 20; i += 1) {
         let line = '';
-        for (let j = 0; j < 40; j += 1) {
-          line += this.asciiToChar(store.state.ram[0x1000 + (i * 40) + j]);
+        for (let j = 0; j < 50; j += 1) {
+          line += this.asciiToChar(store.state.ram[0x1000 + (i * 50) + j]);
         }
         lines.push(line);
       }
@@ -54,15 +53,17 @@ export default {
 
 <style scoped>
   div {
-    text-align: left;
-    padding-bottom: 0;
+    margin-top: 10px;
+    padding: 5px 0 5px 0;
   }
 
   pre {
+    margin: auto;
+    text-align: left;
     font-family: monospace, sans-serif;
     font-size: 100%;
-    width: 390px;
-    padding: 3px 0 0 5px;
+    width: 480px;
+    padding: 3px 4px 0 4px;
     background-color: black;
     color: lime;
   }

@@ -1,34 +1,52 @@
 <template>
   <div id="app">
+    <div class="row header">
+      <div class="title">
+        <img src="@/assets/650vue_logo.png">
+      </div>
+    </div>
+    <div class="row registers">
+      <div class="column-left">
+        <Registers />
+      </div>
+      <div class="column-right">
+        <StatusLights />
+      </div>
+    </div>
     <div class="row">
-    <div class="column-left">
-      <img src="@/assets/650vue_logo.png">
-      <DisplayPanel />
-      <RunCpu />
+      <div class="column-left">
+        <Terminal />
+      </div>
+      <div class="column-right">
+        <Video />
+      </div>
     </div>
-    <div class="column-right">
-      <Video />
-      <Terminal />
-      <hr>
-      <DebugFlags />
-    </div>
+    <div class="row">
+      <div class="column-left">
+        <SpPc />
+      </div>
+      <div class="column-right">
+        <RunCpu />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import DebugFlags from '@/components/debug-flags'
-import DisplayPanel from './components/display-panel.vue'
-import RunCpu from './components/run-cpu.vue'
-import Terminal from './components/terminal.vue'
+import Registers from '@/components/registers'
+import RunCpu from '@/components/run-cpu'
+import SpPc from '@/components/sp-pc'
+import StatusLights from '@/components/status-lights'
+import Terminal from '@/components/terminal'
 import Video from '@/components/video'
 
 export default {
   name: 'app',
   components: {
-    DebugFlags,
-    DisplayPanel,
+    Registers,
     RunCpu,
+    SpPc,
+    StatusLights,
     Terminal,
     Video
   }
@@ -42,11 +60,31 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 20px;
+  margin: none;
+  background-image: url('~@/assets/leather.png');
+  height: 100vw;
 }
 
 .row {
   display: flex;
+}
+
+.header {
+  height: 10vw;
+  background-image: url('~@/assets/burl.png');
+}
+
+.registers {
+  padding-top: 10px;
+}
+
+.title {
+  margin: 10px auto 10px auto;
+  height: 8vw;
+}
+
+img {
+  max-height: 100%;
 }
 
 .column-left {

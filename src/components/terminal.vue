@@ -7,10 +7,12 @@
 
 <script>
 import store from '@/store/index'
+//import { disassembler } from "@/mixins/disassembler.js"
 import { mapState } from 'vuex';
 
 export default {
   name: 'Terminal',
+  //mixins: [disassembler],
   data() {
     return {
       command: '',
@@ -166,6 +168,8 @@ export default {
       // switch block?
       if (this.command[0] === 'g') {
         this.run();
+      } else if (this.command[0] === 'd') {
+        this.disassemble();
       } else if (this.command[0] === 'm') {
         this.showMemory();
       } else if (this.command[0] === 'r') {
@@ -185,11 +189,13 @@ export default {
 
 <style scoped>
   div {
-    text-align: left;
-    padding-bottom: 10px;
+    margin-top: 10px;
+    padding: 0 0 10px 0;
   }
 
   pre {
+    margin: auto;
+    text-align: left;
     font-family: monospace, sans-serif;
     font-size: 100%;
     width: 390px;
@@ -201,8 +207,9 @@ export default {
   input {
     font-family: monospace, sans-serif;
     font-size: 100%;
-    width: 386px;
+    width: 388px;
     padding: 3px 0 0 5px;
+    margin-top: 5px;
     color: yellow;
   }
 
