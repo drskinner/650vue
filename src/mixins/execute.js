@@ -103,6 +103,18 @@ export const execute = {
       store.commit('setFlag', constants.flags.SR_BREAK);
       this.stop();
     },
+    CLC() {
+      store.commit('clearFlag', constants.flags.SR_CARRY);
+    },
+    CLD() {
+      store.commit('clearFlag', constants.flags.SR_DECIMAL);
+    },
+    CLI() {
+      store.commit('clearFlag', constants.flags.SR_INTERRUPT);
+    },
+    CLV() {
+      store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+    },
     DEX() {
       store.commit('decrementRegister', 'xr');
       this.znFlags(this.cpu.xr);
@@ -135,6 +147,15 @@ export const execute = {
     LDY(address) {
       store.commit('writeRegister', { register: 'yr', value: this.ram[address] });
       this.znFlags(this.cpu.yr);
+    },
+    SEC() {
+      store.commit('setFlag', constants.flags.SR_CARRY);
+    },
+    SED() {
+      store.commit('setFlag', constants.flags.SR_DECIMAL);
+    },
+    SEI() {
+      store.commit('setFlag', constants.flags.SR_INTERRUPT);
     },
     STA(address) {
       store.commit('writeRam', { address: address, value: this.cpu.ac });
