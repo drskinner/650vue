@@ -14,6 +14,7 @@ export const opcodes = new Map(
     [0xca, { opcode: 'DEX', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xd0, { opcode: 'BNE', bytes: 2, cycles: 2, mode: 'relative' }],
     [0xe8, { opcode: 'INX', bytes: 1, cycles: 2, mode: 'implied' }],
-    [0xf0, { opcode: 'BEQ', bytes: 2, cycles: 2, mode: 'relative' }]
+    [0xf0, { opcode: 'BEQ', bytes: 2, cycles: 2, mode: 'relative' }],
+    [0x100, { opcode: '???', bytes: 1, cycles: 0, mode: 'implied' }]
   ]
 );

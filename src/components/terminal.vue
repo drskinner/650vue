@@ -7,12 +7,12 @@
 
 <script>
 import store from '@/store/index'
-//import { disassembler } from "@/mixins/disassembler.js"
+import { disassembler } from "@/mixins/disassembler.js"
 import { mapState } from 'vuex';
 
 export default {
   name: 'Terminal',
-  //mixins: [disassembler],
+  mixins: [disassembler],
   data() {
     return {
       command: '',
@@ -53,6 +53,9 @@ export default {
     },
     stringToWord(value) {
       return parseInt(value, 16) & 0xffff;
+    },
+    byteToSignedInt(signedByte) {
+      return (signedByte & 0x80) ? -((signedByte ^ 0xff) + 1) : signedByte;
     },
     outputLine(line) {
       this.monitor.shift();
