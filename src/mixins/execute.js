@@ -12,7 +12,7 @@ export const execute = {
     // increments the clock and program counter.
     //
     step() {
-      let byte = store.state.ram[store.state.cpu.pc];
+      let byte = this.ram[this.cpu.pc];
       let instruction = opcodes.get(byte);
       let address = this[instruction.mode]();
 
@@ -53,20 +53,20 @@ export const execute = {
     // and return the new PC as an address to be read.
     immediate() {
       store.commit('incrementPc');
-      return store.state.cpu.pc;
+      return this.cpu.pc;
     },
     // Relative mode, like immediate mode, will use the byte after
     // the opcode as its operand.
     relative() {
       store.commit('incrementPc');
-      return store.state.cpu.pc;
+      return this.cpu.pc;
     },
     // In absolute mode, the operand is a little-endian 2-byte address.
     absolute() {
       store.commit('incrementPc');
-      let lo = store.state.ram[store.state.cpu.pc];
+      let lo = this.ram[this.cpu.pc];
       store.commit('incrementPc');
-      let hi = store.state.ram[store.state.cpu.pc];
+      let hi = this.ram[this.cpu.pc];
 
       return hi * 0x0100 + lo;
     },
@@ -77,25 +77,25 @@ export const execute = {
     // address, the instruction will require an extra clock cycle to execute.
     absoluteX() {
       store.commit('incrementPc');
-      let lo = store.state.ram[store.state.cpu.pc];
+      let lo = this.ram[this.cpu.pc];
       store.commit('incrementPc');
-      let hi = store.state.ram[store.state.cpu.pc];
+      let hi = this.ram[this.cpu.pc];
 
-      return (hi * 0x0100 + lo + store.state.cpu.xr) & 0xffff;
+      return (hi * 0x0100 + lo + this.cpu.xr) & 0xffff;
     },
     //
     // OPCODES
     //
     // TODO: cycle penalty if branch taken or page boundary crossed
     BEQ(address) {
-      if (store.getters.flagStatus(constants.flags.SR_ZERO)) {
-        let target = store.state.cpu.pc + this.byteToSignedInt(store.state.ram[address]);
+      if (this.flagStatus(constants.flags.SR_ZERO)) {
+        let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
     BNE(address) {
-      if (!store.getters.flagStatus(constants.flags.SR_ZERO)) {
-        let target = store.state.cpu.pc + this.byteToSignedInt(store.state.ram[address]);
+      if (!this.flagStatus(constants.flags.SR_ZERO)) {
+        let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
@@ -105,19 +105,19 @@ export const execute = {
     },
     DEX() {
       store.commit('decrementRegister', 'xr');
-      this.znFlags(store.state.cpu.xr);
+      this.znFlags(this.cpu.xr);
     },
     DEY() {
       store.commit('decrementRegister', 'yr');
-      this.znFlags(store.state.cpu.yr);
+      this.znFlags(this.cpu.yr);
     },
     INX() {
       store.commit('incrementRegister', 'xr');
-      this.znFlags(store.state.cpu.xr);
+      this.znFlags(this.cpu.xr);
     },
     INY() {
       store.commit('incrementRegister', 'yr');
-      this.znFlags(store.state.cpu.yr);
+      this.znFlags(this.cpu.yr);
     },
     // Because step() will increment the PC, we'll
     // JMP to address - 1.
@@ -125,19 +125,19 @@ export const execute = {
       store.commit('writeRegister', { register: 'pc', value: address - 1 });
     },
     LDA(address) {
-      store.commit('writeRegister', { register: 'ac', value: store.state.ram[address] });
-      this.znFlags(store.state.cpu.ac);
+      store.commit('writeRegister', { register: 'ac', value: this.ram[address] });
+      this.znFlags(this.cpu.ac);
     },
     LDX(address) {
-      store.commit('writeRegister', { register: 'xr', value: store.state.ram[address] });
-      this.znFlags(store.state.cpu.xr);
+      store.commit('writeRegister', { register: 'xr', value: this.ram[address] });
+      this.znFlags(this.cpu.xr);
     },
     LDY(address) {
-      store.commit('writeRegister', { register: 'yr', value: store.state.ram[address] });
-      this.znFlags(store.state.cpu.yr);
+      store.commit('writeRegister', { register: 'yr', value: this.ram[address] });
+      this.znFlags(this.cpu.yr);
     },
     STA(address) {
-      store.commit('writeRam', { address: address, value: store.state.cpu.ac });
+      store.commit('writeRam', { address: address, value: this.cpu.ac });
     }
   }
 }

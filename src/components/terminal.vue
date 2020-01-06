@@ -27,9 +27,9 @@ export default {
       return this.monitor.join("\n");
     },
     active() {
-      return store.state.isRunning ? 'inactive' : 'active';
+      return this.isRunning ? 'inactive' : 'active';
     },
-    ...mapState(['isRunning'])
+    ...mapState(['isRunning', 'cpu', 'ram', 'flagStatus'])
   },
   watch: {
     isRunning: function (newValue, oldValue) {
@@ -65,6 +65,13 @@ export default {
       this.outputLine('?');
       return;
     },
+    clearScreen() {
+      for (let i = 0x1000; i < 0x13e8; i += 1) {
+        store.commit('writeRam', { address: i, value: 0 });
+      }
+
+      store.dispatch('refreshVideo');
+    },
     showMemory() {
       // TODO: handle overflow, wrap at MEMTOP
       let parts = this.command.split(' ')
@@ -82,10 +89,10 @@ export default {
       while (memoryPager <= top) {
         let line = `> ${this.hexWord(memoryPager)} `
         for (let i = 0; i < 8; i += 1) {
-          line += `${this.hexByte(store.state.ram[memoryPager + i])} `;
+          line += `${this.hexByte(this.ram[memoryPager + i])} `;
         }
         for (let i = 0; i < 8; i += 1) {
-          line += this.asciiToChar(store.state.ram[memoryPager + i]);
+          line += this.asciiToChar(this.ram[memoryPager + i]);
         }
         this.outputLine(line);
         memoryPager += 0x08;
@@ -119,12 +126,12 @@ export default {
       this.outputLine('   PC  SR AC XR YR SP');
 
       let registerLine = '; ';
-      registerLine += `${this.hexWord(store.state.cpu.pc)} `;
-      registerLine += `${this.hexByte(store.state.cpu.sr)} `;
-      registerLine += `${this.hexByte(store.state.cpu.ac)} `;
-      registerLine += `${this.hexByte(store.state.cpu.xr)} `;
-      registerLine += `${this.hexByte(store.state.cpu.yr)} `;
-      registerLine += `${this.hexByte(store.state.cpu.sp)} `;
+      registerLine += `${this.hexWord(this.cpu.pc)} `;
+      registerLine += `${this.hexByte(this.cpu.sr)} `;
+      registerLine += `${this.hexByte(this.cpu.ac)} `;
+      registerLine += `${this.hexByte(this.cpu.xr)} `;
+      registerLine += `${this.hexByte(this.cpu.yr)} `;
+      registerLine += `${this.hexByte(this.cpu.sp)} `;
       this.outputLine(registerLine);
     },
     setRegisters() {
@@ -164,7 +171,7 @@ export default {
       store.commit('setIsRunning', true);
     },
     send() {
-      if (store.state.isRunning) {
+      if (this.isRunning) {
         return;
       }
       this.outputLine(`<span style="color:yellow;">${this.command}</span>`);
@@ -177,6 +184,8 @@ export default {
         this.showMemory();
       } else if (this.command[0] === 'r') {
         this.showRegisters();
+      } else if (this.command[0] === 'z') {
+        this.clearScreen();
       } else if (this.command[0] === '>') {
         this.writeMemory();
       } else if (this.command[0] === ';') {

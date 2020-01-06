@@ -6,7 +6,7 @@
     <button @click="step">STEP</button>
     <button @click="stop">STOP</button>
     <button @click="reset">RESET</button>
-    Running: {{ this.$store.state.isRunning }}
+    Running: {{ this.isRunning }}
   </div>
 </template>
 
@@ -30,7 +30,7 @@ export default {
       }
     }
   },
-  computed: mapState(['isRunning']),
+  computed: mapState(['isRunning', 'cpu', 'ram']),
   methods: {
     run() {
       this.cycles = 0;
