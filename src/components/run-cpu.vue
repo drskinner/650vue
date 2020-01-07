@@ -12,7 +12,7 @@
 
 <script>
 import store from '@/store/index'
-import { mapState } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import { execute } from "@/mixins/execute.js";
 
 export default {
@@ -30,7 +30,10 @@ export default {
       }
     }
   },
-  computed: mapState(['isRunning', 'cpu', 'ram']),
+  computed: {
+    mapState(['isRunning', 'cpu', 'ram']),
+    ...mapGetters('flagStatus')
+  },
   methods: {
     run() {
       this.cycles = 0;

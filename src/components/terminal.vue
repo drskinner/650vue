@@ -16,6 +16,7 @@ export default {
   data() {
     return {
       command: '',
+      memoryPager: 0x0000,
       monitor: Array(20).fill('')
     }
   },
@@ -29,7 +30,7 @@ export default {
     active() {
       return this.isRunning ? 'inactive' : 'active';
     },
-    ...mapState(['isRunning', 'cpu', 'ram', 'flagStatus'])
+    ...mapState(['isRunning', 'cpu', 'ram'])
   },
   watch: {
     isRunning: function (newValue, oldValue) {
@@ -76,26 +77,24 @@ export default {
       // TODO: handle overflow, wrap at MEMTOP
       let parts = this.command.split(' ')
 
-      if (parts.length === 1) {
-        this.error();
-        return;
+      if (parts.length > 1) {
+        this.memoryPager = parseInt(parts[1], 16);
       }
 
-      let memoryPager = parseInt(parts[1], 16);
-      let top = (parts.length < 3) ? memoryPager + 0x7f : parseInt(parts[2], 16);
-      if (top > memoryPager + 0x7f) {
-        top = memoryPager + 0x7f;
+      let top = (parts.length < 3) ? this.memoryPager + 0x7f : parseInt(parts[2], 16);
+      if (top > this.memoryPager + 0x7f) {
+        top = this.memoryPager + 0x7f;
       }
-      while (memoryPager <= top) {
-        let line = `> ${this.hexWord(memoryPager)} `
+      while (this.memoryPager <= top) {
+        let line = `> ${this.hexWord(this.memoryPager)} `
         for (let i = 0; i < 8; i += 1) {
-          line += `${this.hexByte(this.ram[memoryPager + i])} `;
+          line += `${this.hexByte(this.ram[this.memoryPager + i])} `;
         }
         for (let i = 0; i < 8; i += 1) {
-          line += this.asciiToChar(this.ram[memoryPager + i]);
+          line += this.asciiToChar(this.ram[this.memoryPager + i]);
         }
         this.outputLine(line);
-        memoryPager += 0x08;
+        this.memoryPager += 0x08;
       }
     },
     writeMemory() {
