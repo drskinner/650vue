@@ -31,8 +31,8 @@ export default {
     }
   },
   computed: {
-    mapState(['isRunning', 'cpu', 'ram']),
-    ...mapGetters('flagStatus')
+    ...mapState(['isRunning', 'cpu', 'ram']),
+    ...mapGetters(['flagStatus'])
   },
   methods: {
     run() {

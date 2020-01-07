@@ -13,16 +13,22 @@ export const opcodes = new Map(
     [0x78, { opcode: 'SEI', bytes: 1, cycles: 2, mode: 'implied' }],
 
     [0x88, { opcode: 'DEY', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x8a, { opcode: 'TXA', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x8d, { opcode: 'STA', bytes: 3, cycles: 4, mode: 'absolute' }],
 
+    [0x98, { opcode: 'TYA', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x9a, { opcode: 'TXS', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x9d, { opcode: 'STA', bytes: 3, cycles: 4, mode: 'absoluteX' }],
 
     [0xa0, { opcode: 'LDY', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xa2, { opcode: 'LDX', bytes: 2, cycles: 2, mode: 'immediate' }],
+    [0xa8, { opcode: 'TAY', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xa9, { opcode: 'LDA', bytes: 2, cycles: 2, mode: 'immediate' }],
+    [0xaa, { opcode: 'TAX', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xad, { opcode: 'LDA', bytes: 3, cycles: 4, mode: 'absolute' }],
 
     [0xb8, { opcode: 'CLV', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xba, { opcode: 'TSX', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xbd, { opcode: 'LDA', bytes: 3, cycles: 4, mode: 'absoluteX' }],
 
     [0xc8, { opcode: 'INY', bytes: 1, cycles: 2, mode: 'implied' }],

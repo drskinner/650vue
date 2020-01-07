@@ -159,6 +159,30 @@ export const execute = {
     },
     STA(address) {
       store.commit('writeRam', { address: address, value: this.cpu.ac });
+    },
+    TAX() {
+      store.commit('writeRegister', { register: 'xr', value: this.cpu.ac });
+      this.znFlags(this.cpu.xr);
+    },
+    TAY() {
+      store.commit('writeRegister', { register: 'yr', value: this.cpu.ac });
+      this.znFlags(this.cpu.yr);
+    },
+    TSX() {
+      store.commit('writeRegister', { register: 'xr', value: this.cpu.sp });
+      this.znFlags(this.cpu.xr);
+    },
+    TXA() {
+      store.commit('writeRegister', { register: 'ac', value: this.cpu.xr });
+      this.znFlags(this.cpu.ac);
+    },
+    // TXS does not affect status flags
+    TXS() {
+      store.commit('writeRegister', { register: 'sp', value: this.cpu.xr });
+    },
+    TYA() {
+      store.commit('writeRegister', { register: 'ac', value: this.cpu.yr });
+      this.znFlags(this.cpu.ac);
     }
   }
 }
