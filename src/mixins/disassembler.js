@@ -2,15 +2,14 @@ import { opcodes } from '@/opcodes'
 
 export const disassembler = {
   methods: {
-    disassemble() {
-      // save memoryPager in data() for continuations
+    disassemble(maxLines = 0x10) {
       let parts = this.command.split(' ');
       let lineCount = 0;
       if (parts.length > 1) {
         this.memoryPager = parseInt(parts[1], 16);
       }
 
-      while (lineCount < 0x10) {
+      while (lineCount < maxLines) {
         let instruction = opcodes.get(this.ram[this.memoryPager]);
         if (instruction === undefined) {
           instruction = opcodes.get(0x100);
@@ -48,7 +47,7 @@ export const disassembler = {
             break;
           case 'relative': {
             let nextAddress = (this.memoryPager + 0x02) & 0xffff
-            line += `$${this.hexWord(nextAddress + this.byteToSignedInt(nextAddress))}`;
+            line += `$${this.hexWord((nextAddress + this.byteToSignedInt(operand1)) & 0xffff)}`;
             break;
           }
           default:

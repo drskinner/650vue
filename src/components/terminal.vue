@@ -7,12 +7,13 @@
 
 <script>
 import store from '@/store/index'
+import { assembler } from "@/mixins/assembler.js"
 import { disassembler } from "@/mixins/disassembler.js"
 import { mapState } from 'vuex';
 
 export default {
   name: 'Terminal',
-  mixins: [disassembler],
+  mixins: [assembler, disassembler],
   data() {
     return {
       command: '',
@@ -49,14 +50,17 @@ export default {
     stringToByte(value) {
       return parseInt(value, 16) & 0xff;
     },
-    asciiToChar(value) {
-      return (value < 32) ? '.' : String.fromCharCode(value);
-    },
     stringToWord(value) {
       return parseInt(value, 16) & 0xffff;
     },
+    asciiToChar(value) {
+      return (value < 32) ? '.' : String.fromCharCode(value);
+    },
     byteToSignedInt(signedByte) {
       return (signedByte & 0x80) ? -((signedByte ^ 0xff) + 1) : signedByte;
+    },
+    signedIntToByte(signedInt) {
+      return (signedInt >= 0) ? signedInt : (0x100 + signedInt);
     },
     outputLine(line) {
       this.monitor.shift();
@@ -166,33 +170,53 @@ export default {
       }
 
       store.commit('writeRegister',
-              { register: 'pc', value: this.stringToWord(parts[1]) });
+                   { register: 'pc', value: this.stringToWord(parts[1]) });
       store.commit('setIsRunning', true);
     },
     send() {
       if (this.isRunning) {
         return;
       }
-      this.outputLine(`<span style="color:yellow;">${this.command}</span>`);
-      // switch block?
-      if (this.command[0] === 'g') {
-        this.run();
-      } else if (this.command[0] === 'd') {
-        this.disassemble();
-      } else if (this.command[0] === 'm') {
-        this.showMemory();
-      } else if (this.command[0] === 'r') {
-        this.showRegisters();
-      } else if (this.command[0] === 'z') {
-        this.clearScreen();
-      } else if (this.command[0] === '>') {
-        this.writeMemory();
-      } else if (this.command[0] === ';') {
-        this.setRegisters();
-      } else {
-        this.error();
+
+      if (this.command[0] != '.') {
+        this.outputLine(`<span style="color:yellow;">${this.command}</span>`);
       }
-      this.command = '';
+
+      switch (this.command[0]) {
+        case 'd':
+          this.disassemble();
+          break;
+        case 'g':
+          this.run();
+          break;
+        case 'm':
+          this.showMemory();
+          break;
+        case 'r':
+          this.showRegisters();
+            break;
+        case 'z':
+          this.clearScreen();
+          break;
+        case '>':
+          this.writeMemory();
+          break;
+        case ';':
+          this.setRegisters();
+          break;
+        case '.':
+          this.assemble();
+          break;
+        default:
+          this.error();
+      }
+
+      if (this.command[0] === '.' && this.command.length >= 8) {
+        this.disassemble(1); // disassemble() advances memoryPager
+        this.command = `. ${this.hexWord(this.memoryPager)} `;
+      } else {
+        this.command = '';
+      }
     }
   }
 }
