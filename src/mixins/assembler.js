@@ -82,6 +82,12 @@ export const assembler = {
           branchTo = this.stringToWord(operand.substring(1, 5));
           relativeTarget = this.signedIntToByte((branchTo - (this.memoryPager + 2)) & 0xff);
           targetLo = this.hexByte(relativeTarget);
+          break;
+        case 'zeroPage':
+        case 'zeroPageX':
+        case 'zeroPageY':
+          targetLo = operand.substring(1, 3);
+          break;
       }
 
       // little-endian; write low byte of 16-bit operands first

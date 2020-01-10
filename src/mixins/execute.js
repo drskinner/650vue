@@ -93,6 +93,22 @@ export const execute = {
 
       return (hi * 0x0100 + lo + this.cpu.yr) & 0xffff;
     },
+    // In zeroPage mode, the operand is an address of the form 0x00nn.
+    // We can simply return this byte as an address.
+    zeroPage() {
+      store.commit('incrementPc');
+      return this.ram[this.cpu.pc] & 0x00ff; // mask to enforce zero-page
+    },
+    // In zeroPageX, the X register is added to the operand to get the
+    // target address. Overflows "wrap around" so we apply a zero-page mask.
+    zeroPageX() {
+      store.commit('incrementPc');
+      return (this.ram[this.cpu.pc] + this.cpu.xr) & 0x00ff
+    },
+    zeroPageY() {
+      store.commit('incrementPc');
+      return (this.ram[this.cpu.pc] + this.cpu.yr) & 0x00ff
+    },
     //
     // OPCODES
     //
@@ -160,7 +176,7 @@ export const execute = {
     },
     NOP() {
       return;
-    }
+    },
     SEC() {
       store.commit('setFlag', constants.flags.SR_CARRY);
     },

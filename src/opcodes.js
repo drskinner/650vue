@@ -23,6 +23,9 @@ export const opcodes = new Map(
 
     [0xa0, { opcode: 'LDY', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xa2, { opcode: 'LDX', bytes: 2, cycles: 2, mode: 'immediate' }],
+    [0xa4, { opcode: 'LDY', bytes: 2, cycles: 3, mode: 'zeroPage' }],
+    [0xa5, { opcode: 'LDA', bytes: 2, cycles: 3, mode: 'zeroPage' }],
+    [0xa6, { opcode: 'LDX', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0xa8, { opcode: 'TAY', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xa9, { opcode: 'LDA', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xaa, { opcode: 'TAX', bytes: 1, cycles: 2, mode: 'implied' }],
@@ -30,6 +33,9 @@ export const opcodes = new Map(
     [0xad, { opcode: 'LDA', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xae, { opcode: 'LDX', bytes: 3, cycles: 4, mode: 'absolute' }],
 
+    [0xb4, { opcode: 'LDY', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
+    [0xb5, { opcode: 'LDA', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
+    [0xb6, { opcode: 'LDX', bytes: 2, cycles: 4, mode: 'zeroPageY' }],
     [0xb8, { opcode: 'CLV', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xb9, { opcode: 'LDA', bytes: 3, cycles: 4, mode: 'absoluteY' }],
     [0xba, { opcode: 'TSX', bytes: 1, cycles: 2, mode: 'implied' }],

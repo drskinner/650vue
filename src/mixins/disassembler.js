@@ -50,6 +50,15 @@ export const disassembler = {
             line += `$${this.hexWord((nextAddress + this.byteToSignedInt(operand1)) & 0xffff)}`;
             break;
           }
+          case 'zeroPage':
+            line += `$${this.hexByte(operand1)}`;
+            break;
+          case 'zeroPageX':
+            line += `$${this.hexByte(operand1)},x`;
+            break;
+          case 'zeroPageY':
+            line += `$${this.hexByte(operand1)},y`;
+            break;
           default:
             break;
         }
