@@ -83,6 +83,16 @@ export const execute = {
 
       return (hi * 0x0100 + lo + this.cpu.xr) & 0xffff;
     },
+    // TODO: when the calculated address is on a different page from the operand
+    // address, the instruction will require an extra clock cycle to execute.
+    absoluteY() {
+      store.commit('incrementPc');
+      let lo = this.ram[this.cpu.pc];
+      store.commit('incrementPc');
+      let hi = this.ram[this.cpu.pc];
+
+      return (hi * 0x0100 + lo + this.cpu.yr) & 0xffff;
+    },
     //
     // OPCODES
     //
@@ -148,6 +158,9 @@ export const execute = {
       store.commit('writeRegister', { register: 'yr', value: this.ram[address] });
       this.znFlags(this.cpu.yr);
     },
+    NOP() {
+      return;
+    }
     SEC() {
       store.commit('setFlag', constants.flags.SR_CARRY);
     },
