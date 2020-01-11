@@ -177,6 +177,50 @@ export const execute = {
     NOP() {
       return;
     },
+    ROL(address) {
+      let cachedCarryBit = this.flagStatus(constants.flags.SR_CARRY);
+
+        if (address === null) {
+        if (this.cpu.ac & 0x80) {
+          store.commit('setFlag', constants.flags.SR_CARRY);
+        } else {
+          store.commit('clearFlag', constants.flags.SR_CARRY);
+        }
+        this.cpu.ac = ((this.cpu.ac << 1) & 0xff) + cachedCarryBit;
+        this.znFlags(this.cpu.ac);
+      } else {
+        if (this.ram[address] & 0x80) {
+          store.commit('setFlag', constants.flags.SR_CARRY);
+        } else {
+          store.commit('clearFlag', constants.flags.SR_CARRY);
+        }
+        store.commit('writeRam', { address: address,
+                                   value: ((this.ram[address] << 1) & 0xff) + cachedCarryBit });
+        this.znFlags(this.ram[address]);
+      }
+    },
+    ROR(address) {
+      let cachedCarryBit = this.flagStatus(constants.flags.SR_CARRY);
+
+        if (address === null) {
+        if (this.cpu.ac & 0x01) {
+          store.commit('setFlag', constants.flags.SR_CARRY);
+        } else {
+          store.commit('clearFlag', constants.flags.SR_CARRY);
+        }
+        this.cpu.ac = ((this.cpu.ac >> 1) & 0xff) + (cachedCarryBit * 0x80);
+        this.znFlags(this.cpu.ac);
+      } else {
+        if (this.ram[address] & 0x01) {
+          store.commit('setFlag', constants.flags.SR_CARRY);
+        } else {
+          store.commit('clearFlag', constants.flags.SR_CARRY);
+        }
+        store.commit('writeRam', { address: address,
+                                   value: ((this.ram[address] >> 1) & 0xff) + (cachedCarryBit * 0x80) });
+        this.znFlags(this.ram[address]);
+      }
+    },
     SEC() {
       store.commit('setFlag', constants.flags.SR_CARRY);
     },

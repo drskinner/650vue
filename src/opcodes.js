@@ -4,13 +4,25 @@ export const opcodes = new Map(
 
     [0x18, { opcode: 'CLC', bytes: 1, cycles: 2, mode: 'implied' }],
 
+    [0x26, { opcode: 'ROL', bytes: 2, cycles: 5, mode: 'zeroPage' }],
+    [0x2a, { opcode: 'ROL', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x2e, { opcode: 'ROL', bytes: 3, cycles: 6, mode: 'absolute' }],
+
+    [0x36, { opcode: 'ROL', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x38, { opcode: 'SEC', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x3e, { opcode: 'ROL', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x4c, { opcode: 'JMP', bytes: 3, cycles: 3, mode: 'absolute' }],
 
     [0x58, { opcode: 'CLI', bytes: 1, cycles: 2, mode: 'implied' }],
 
+    [0x66, { opcode: 'ROR', bytes: 2, cycles: 5, mode: 'zeroPage' }],
+    [0x6a, { opcode: 'ROR', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x6e, { opcode: 'ROR', bytes: 3, cycles: 6, mode: 'absolute' }],
+
+    [0x76, { opcode: 'ROR', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x78, { opcode: 'SEI', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x7e, { opcode: 'ROR', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x88, { opcode: 'DEY', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x8a, { opcode: 'TXA', bytes: 1, cycles: 2, mode: 'implied' }],
@@ -29,7 +41,7 @@ export const opcodes = new Map(
     [0xa8, { opcode: 'TAY', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xa9, { opcode: 'LDA', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xaa, { opcode: 'TAX', bytes: 1, cycles: 2, mode: 'implied' }],
-    [0xae, { opcode: 'LDY', bytes: 3, cycles: 4, mode: 'absolute' }],
+    [0xac, { opcode: 'LDY', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xad, { opcode: 'LDA', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xae, { opcode: 'LDX', bytes: 3, cycles: 4, mode: 'absolute' }],
 
