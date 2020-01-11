@@ -165,7 +165,7 @@ export default {
     load(){
       let parts = this.command.split(' ');
 
-      axios.get(`/disk/${parts[1]}.txt`).then(
+      axios.get(`disk/${parts[1]}.txt`).then(
         response => {
           response.data.split("\n").forEach(line => {
             switch(line[0]) {
