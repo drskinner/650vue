@@ -6,6 +6,7 @@
 </template>
 
 <script>
+import axios from 'axios'
 import store from '@/store/index'
 import { assembler } from "@/mixins/assembler.js"
 import { disassembler } from "@/mixins/disassembler.js"
@@ -161,16 +162,44 @@ export default {
       this.showRegisters();
       return;
     },
+    load(){
+      let parts = this.command.split(' ');
+
+      axios.get(`/disk/${parts[1]}.txt`).then(
+        response => {
+          response.data.split("\n").forEach(line => {
+            switch(line[0]) {
+              case '>':
+                this.command = line;
+                this.writeMemory();
+                break;
+              case '.':
+                this.command = line;
+                this.assemble();
+                break;
+              default:
+                this.outputLine(line);
+                break;
+            }
+          });
+
+          this.command = '';
+          store.dispatch('resetCpu');
+          this.showRegisters();
+        },
+        error => {
+          error = 'File not found.';
+          this.outputLine(`<span style="color:orange;">Error:</span> ${error}`);
+        });
+    },
     run() {
       let parts = this.command.split(' ');
 
-      if (!parts[1]) {
-        this.error();
-        return;
+      if (parts[1]) {
+        store.commit('writeRegister',
+                     { register: 'pc', value: this.stringToWord(parts[1]) });
       }
 
-      store.commit('writeRegister',
-                   { register: 'pc', value: this.stringToWord(parts[1]) });
       store.commit('setIsRunning', true);
     },
     send() {
@@ -188,6 +217,9 @@ export default {
           break;
         case 'g':
           this.run();
+          break;
+        case 'l':
+          this.load();
           break;
         case 'm':
           this.showMemory();

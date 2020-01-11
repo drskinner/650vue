@@ -1,0 +1,7 @@
+; Useless endless thing
+> fffc 00 b0
+. b000 lda #$01
+. b002 inx
+. b003 dey
+. b004 ror
+. b005 jmp $b002
