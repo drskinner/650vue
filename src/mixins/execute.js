@@ -112,6 +112,26 @@ export const execute = {
     //
     // OPCODES
     //
+    ASL(address) {
+      if (address === null) {
+        if (this.cpu.ac & 0x80) {
+          store.commit('setFlag', constants.flags.SR_CARRY);
+        } else {
+          store.commit('clearFlag', constants.flags.SR_CARRY);
+        }
+        this.cpu.ac = (this.cpu.ac << 1) & 0xff;
+        this.znFlags(this.cpu.ac);
+      } else {
+        if (this.ram[address] & 0x80) {
+          store.commit('setFlag', constants.flags.SR_CARRY);
+        } else {
+          store.commit('clearFlag', constants.flags.SR_CARRY);
+        }
+        store.commit('writeRam', { address: address,
+                                  value: (this.ram[address] << 1) & 0xff });
+        this.znFlags(this.ram[address]);
+      }
+    },
     // TODO: cycle penalty if branch taken or page boundary crossed
     BEQ(address) {
       if (this.flagStatus(constants.flags.SR_ZERO)) {
@@ -173,6 +193,26 @@ export const execute = {
     LDY(address) {
       store.commit('writeRegister', { register: 'yr', value: this.ram[address] });
       this.znFlags(this.cpu.yr);
+    },
+    LSR(address) {
+      if (address === null) {
+        if (this.cpu.ac & 0x01) {
+          store.commit('setFlag', constants.flags.SR_CARRY);
+        } else {
+          store.commit('clearFlag', constants.flags.SR_CARRY);
+        }
+        this.cpu.ac = (this.cpu.ac >> 1) & 0xff;
+        this.znFlags(this.cpu.ac);
+      } else {
+        if (this.ram[address] & 0x01) {
+          store.commit('setFlag', constants.flags.SR_CARRY);
+        } else {
+          store.commit('clearFlag', constants.flags.SR_CARRY);
+        }
+        store.commit('writeRam', { address: address,
+                                  value: (this.ram[address] >> 1) & 0xff });
+        this.znFlags(this.ram[address]);
+      }
     },
     NOP() {
       return;
