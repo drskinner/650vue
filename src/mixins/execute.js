@@ -133,8 +133,26 @@ export const execute = {
       }
     },
     // TODO: cycle penalty if branch taken or page boundary crossed
+    BCC(address) {
+      if (!this.flagStatus(constants.flags.SR_CARRY)) {
+        let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+        store.commit('writeRegister', { register: 'pc', value: target });
+      }
+    },
+    BCS(address) {
+      if (this.flagStatus(constants.flags.SR_CARRY)) {
+        let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+        store.commit('writeRegister', { register: 'pc', value: target });
+      }
+    },
     BEQ(address) {
       if (this.flagStatus(constants.flags.SR_ZERO)) {
+        let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+        store.commit('writeRegister', { register: 'pc', value: target });
+      }
+    },
+    BMI(address) {
+      if (this.flagStatus(constants.flags.SR_NEGATIVE)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
         store.commit('writeRegister', { register: 'pc', value: target });
       }
@@ -145,9 +163,27 @@ export const execute = {
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
+    BPL(address) {
+      if (!this.flagStatus(constants.flags.SR_NEGATIVE)) {
+        let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+        store.commit('writeRegister', { register: 'pc', value: target });
+      }
+    },
     BRK() {
       store.commit('setFlag', constants.flags.SR_BREAK);
       this.stop();
+    },
+    BVC(address) {
+      if (!this.flagStatus(constants.flags.SR_OVERFLOW)) {
+        let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+        store.commit('writeRegister', { register: 'pc', value: target });
+      }
+    },
+    BVS(address) {
+      if (this.flagStatus(constants.flags.SR_OVERFLOW)) {
+        let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+        store.commit('writeRegister', { register: 'pc', value: target });
+      }
     },
     CLC() {
       store.commit('clearFlag', constants.flags.SR_CARRY);

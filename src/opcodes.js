@@ -5,6 +5,7 @@ export const opcodes = new Map(
     [0x0a, { opcode: 'ASL', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x0e, { opcode: 'ASL', bytes: 3, cycles: 6, mode: 'absolute' }],
 
+    [0x10, { opcode: 'BPL', bytes: 2, cycles: 2, mode: 'relative' }],
     [0x16, { opcode: 'ASL', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x18, { opcode: 'CLC', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x1e, { opcode: 'ASL', bytes: 3, cycles: 7, mode: 'absoluteX' }],
@@ -13,6 +14,7 @@ export const opcodes = new Map(
     [0x2a, { opcode: 'ROL', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x2e, { opcode: 'ROL', bytes: 3, cycles: 6, mode: 'absolute' }],
 
+    [0x30, { opcode: 'BMI', bytes: 2, cycles: 2, mode: 'relative' }],
     [0x36, { opcode: 'ROL', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x38, { opcode: 'SEC', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x3e, { opcode: 'ROL', bytes: 3, cycles: 7, mode: 'absoluteX' }],
@@ -22,6 +24,7 @@ export const opcodes = new Map(
     [0x4c, { opcode: 'JMP', bytes: 3, cycles: 3, mode: 'absolute' }],
     [0x4e, { opcode: 'LSR', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
+    [0x50, { opcode: 'BVC', bytes: 2, cycles: 2, mode: 'relative' }],
     [0x56, { opcode: 'LSR', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x58, { opcode: 'CLI', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x5e, { opcode: 'LSR', bytes: 3, cycles: 6, mode: 'absolute' }],
@@ -30,6 +33,7 @@ export const opcodes = new Map(
     [0x6a, { opcode: 'ROR', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x6e, { opcode: 'ROR', bytes: 3, cycles: 6, mode: 'absolute' }],
 
+    [0x70, { opcode: 'BVS', bytes: 2, cycles: 2, mode: 'relative' }],
     [0x76, { opcode: 'ROR', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x78, { opcode: 'SEI', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x7e, { opcode: 'ROR', bytes: 3, cycles: 7, mode: 'absoluteX' }],
@@ -38,6 +42,7 @@ export const opcodes = new Map(
     [0x8a, { opcode: 'TXA', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x8d, { opcode: 'STA', bytes: 3, cycles: 4, mode: 'absolute' }],
 
+    [0x90, { opcode: 'BCC', bytes: 2, cycles: 2, mode: 'relative' }],
     [0x98, { opcode: 'TYA', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x9d, { opcode: 'STA', bytes: 3, cycles: 5, mode: 'absoluteY' }],
     [0x9a, { opcode: 'TXS', bytes: 1, cycles: 2, mode: 'implied' }],
@@ -55,6 +60,7 @@ export const opcodes = new Map(
     [0xad, { opcode: 'LDA', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xae, { opcode: 'LDX', bytes: 3, cycles: 4, mode: 'absolute' }],
 
+    [0xb0, { opcode: 'BCS', bytes: 2, cycles: 2, mode: 'relative' }],
     [0xb4, { opcode: 'LDY', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
     [0xb5, { opcode: 'LDA', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
     [0xb6, { opcode: 'LDX', bytes: 2, cycles: 4, mode: 'zeroPageY' }],
