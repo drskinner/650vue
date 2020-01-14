@@ -44,7 +44,7 @@ export const opcodes = new Map(
 
     [0x90, { opcode: 'BCC', bytes: 2, cycles: 2, mode: 'relative' }],
     [0x98, { opcode: 'TYA', bytes: 1, cycles: 2, mode: 'implied' }],
-    [0x9d, { opcode: 'STA', bytes: 3, cycles: 5, mode: 'absoluteY' }],
+    [0x99, { opcode: 'STA', bytes: 3, cycles: 5, mode: 'absoluteY' }],
     [0x9a, { opcode: 'TXS', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x9d, { opcode: 'STA', bytes: 3, cycles: 5, mode: 'absoluteX' }],
 
@@ -71,13 +71,27 @@ export const opcodes = new Map(
     [0xbd, { opcode: 'LDA', bytes: 3, cycles: 4, mode: 'absoluteX' }],
     [0xbe, { opcode: 'LDX', bytes: 3, cycles: 4, mode: 'absoluteY' }],
 
+    [0xc0, { opcode: 'CPY', bytes: 2, cycles: 2, mode: 'immediate' }],
+    [0xc1, { opcode: 'CMP', bytes: 2, cycles: 6, mode: 'indexedIndirect' }],
+    [0xc4, { opcode: 'CPY', bytes: 2, cycles: 3, mode: 'zeroPage' }],
+    [0xc5, { opcode: 'CMP', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0xc8, { opcode: 'INY', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xc9, { opcode: 'CMP', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xca, { opcode: 'DEX', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xcc, { opcode: 'CPY', bytes: 3, cycles: 4, mode: 'absolute' }],
+    [0xcd, { opcode: 'CMP', bytes: 3, cycles: 4, mode: 'absolute' }],
 
     [0xd0, { opcode: 'BNE', bytes: 2, cycles: 2, mode: 'relative' }],
+    [0xc1, { opcode: 'CMP', bytes: 2, cycles: 6, mode: 'indirectIndexed' }],
+    [0xd5, { opcode: 'CMP', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
     [0xd8, { opcode: 'CLD', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xd9, { opcode: 'CMP', bytes: 3, cycles: 4, mode: 'absoluteY' }],
+    [0xdd, { opcode: 'CMP', bytes: 3, cycles: 4, mode: 'absoluteX' }],
 
+    [0xe0, { opcode: 'CPX', bytes: 2, cycles: 2, mode: 'immediate' }],
+    [0xe4, { opcode: 'CPX', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0xe8, { opcode: 'INX', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xec, { opcode: 'CPX', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xea, { opcode: 'NOP', bytes: 1, cycles: 2, mode: 'implied' }],
 
     [0xf0, { opcode: 'BEQ', bytes: 2, cycles: 2, mode: 'relative' }],

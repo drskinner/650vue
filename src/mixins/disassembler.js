@@ -40,6 +40,9 @@ export const disassembler = {
           case 'absoluteX':
             line += `$${this.hexByte(operand2)}${this.hexByte(operand1)},x`;
             break;
+          case 'absoluteY':
+            line += `$${this.hexByte(operand2)}${this.hexByte(operand1)},y`;
+            break;
           case 'immediate':
             line += `#$${this.hexByte(operand1)}`;
             break;

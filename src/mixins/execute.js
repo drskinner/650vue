@@ -109,6 +109,37 @@ export const execute = {
       store.commit('incrementPc');
       return (this.ram[this.cpu.pc] + this.cpu.yr) & 0x00ff
     },
+    // Indirect, Indexed mode has, as its operand, a zero-page address that
+    // holds the low byte of a little-endian two-byte address. To this
+    // two-byte address, we add the value of the Y register to determine
+    // the final "effective" address.
+    //
+    // TODO: As with other indexed modes, a change in page costs an additional
+    // clock cycle.
+    indirectIndexed() {
+      store.commit('incrementPc');
+      let zeroPageAddress = this.ram[this.cpu.pc];
+      let lo = this.ram[zeroPageAddress];
+      let hi = this.ram[zeroPageAddress + 1];
+
+      return (hi * 0x0100 + lo + this.cpu.yr) & 0xffff
+    },
+    // In "Indexed, Indirect" mode, the 8-bit operand is added to the
+    // X register. The result is the low byte of a little-endian two-byte
+    // effective address. Zero-page addresses "wrap", so there will be no
+    // clock-cycle penalty for crossing a page boundary.
+    //
+    // "You may never need to use this mode. Indeed, most programmers lead
+    //  full, rich lives without ever writing code that uses indexed, indirect
+    //  addressing." -- Jim Butterfield
+    indexedIndirect() {
+      store.commit('incrementPc');
+      let zeroPageAddress = (this.ram[this.cpu.pc] + this.cpu.xr) & 0xff
+      let lo = this.ram[zeroPageAddress] & 0xff
+      let hi = this.ram[zeroPageAddress + 1] & 0xff
+
+      return (hi * 0x0100 + lo) & 0xffff
+    },
     //
     // OPCODES
     //
@@ -196,6 +227,36 @@ export const execute = {
     },
     CLV() {
       store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+    },
+    CMP(address) {
+      let diff = (this.cpu.ac + 0x100 - this.ram[address]) & 0xff
+
+      if (this.cpu.ac >= this.ram[address]) {
+        store.commit('setFlag', constants.flags.SR_CARRY);
+      } else {
+        store.commit('clearFlag', constants.flags.SR_CARRY);
+      }
+      this.znFlags(diff)
+    },
+    CPX(address) {
+      let diff = (this.cpu.xr + 0x100 - this.ram[address]) & 0xff
+
+      if (this.cpu.xr >= this.ram[address]) {
+        store.commit('setFlag', constants.flags.SR_CARRY);
+      } else { 
+        store.commit('clearFlag', constants.flags.SR_CARRY);
+      }
+      this.znFlags(diff)
+    },
+    CPY(address) {
+      let diff = (this.cpu.yr + 0x100 - this.ram[address]) & 0xff
+
+      if (this.cpu.yr >= this.ram[address]) {
+        store.commit('setFlag', constants.flags.SR_CARRY);
+      } else { 
+        store.commit('clearFlag', constants.flags.SR_CARRY);
+      }
+      this.znFlags(diff)
     },
     DEX() {
       store.commit('decrementRegister', 'xr');
