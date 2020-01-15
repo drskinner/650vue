@@ -8,3 +8,4 @@
 . c00d STA $12ed,x
 . c010 DEX 
 . c011 BNE $c004
+. c013 BRK

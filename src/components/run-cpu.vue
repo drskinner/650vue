@@ -1,6 +1,6 @@
 <template>
   <div>
-    Cycles: {{ cycles }}
+    Cycles: {{ runCycles }}
     <!-- TODO: Contextually disable buttons -->
     <button @click="run">RUN</button>
     <button @click="step">STEP</button>
@@ -19,8 +19,11 @@ export default {
   mixins: [execute],
   data() {
     return {
-      cycles: 0,
+      runCycles: 0,
+      penaltyCycles: 0,
       timer: null,
+      irq: false,
+      nmi: false
     }
   },
   watch: {
@@ -36,10 +39,12 @@ export default {
   },
   methods: {
     run() {
-      this.cycles = 0;
+      this.runCycles = 0;
+      this.irq = false;
+      this.nmi = false;
       store.commit('setIsRunning', true);
       if (!this.timer) {
-        this.timer = setInterval(() => this.step(), 10);
+        this.timer = setInterval(() => this.tick(), 10);
       }
     },
     stop() {
@@ -49,6 +54,7 @@ export default {
       store.dispatch('refreshVideo');
     },
     reset() {
+      this.runCycles = 0;
       store.dispatch('resetCpu');
     }
   }

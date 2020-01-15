@@ -11,15 +11,41 @@ export const execute = {
     // the function for the opcode, and finally
     // increments the clock and program counter.
     //
+    tick() {
+      let tickCycles = 5000;
+      let instructionCycles = 0;
+
+      while (tickCycles > 0 && !this.nmi) {
+        instructionCycles = this.step();
+        tickCycles -= instructionCycles;
+      }
+
+      // NMI cannot be ignored!
+      if (this.nmi) {
+        this.stop();
+      }
+
+      // if (this.irq) {
+      //   TODO: jump to IRQ vector and continue execution
+      // }
+
+      store.dispatch('refreshVideo');
+    },
     step() {
       let byte = this.ram[this.cpu.pc];
       let instruction = opcodes.get(byte);
+      this.penaltyCycles = 0; // reset cycle penalty
+
       let address = this[instruction.mode]();
 
       this[instruction.opcode](address);
-      this.cycles += instruction.cycles;
+      this.runCycles += instruction.cycles + this.penaltyCycles;
       store.commit('incrementPc');
-      store.dispatch('refreshVideo');
+
+      if (!this.isRunning) {
+        store.dispatch('refreshVideo');
+      }
+      return instruction.cycles + this.penaltyCycles;
     },
     // Instructions that could result in a zero or negative
     // must set the Z and N status flags correctly.
@@ -70,10 +96,10 @@ export const execute = {
 
       return hi * 0x0100 + lo;
     },
-    // In absolute_x, the X register is added to the 2-byte address to get the
+    // In absoluteX, the X register is added to the 2-byte address to get the
     // target address. Overflow addresses "wrap around" from 0xffff to 0x0000.
     //
-    // TODO: when the calculated address is on a different page from the operand
+    // When the calculated address is on a different page from the operand
     // address, the instruction will require an extra clock cycle to execute.
     absoluteX() {
       store.commit('incrementPc');
@@ -81,9 +107,15 @@ export const execute = {
       store.commit('incrementPc');
       let hi = this.ram[this.cpu.pc];
 
-      return (hi * 0x0100 + lo + this.cpu.xr) & 0xffff;
+      let target = (hi * 0x0100 + lo + this.cpu.xr) & 0xffff;
+
+      if ((target & 0xff00) != (hi * 0x100)) {
+        this.penaltyCycles += 1;
+      }
+
+      return target;
     },
-    // TODO: when the calculated address is on a different page from the operand
+    // When the calculated address is on a different page from the operand
     // address, the instruction will require an extra clock cycle to execute.
     absoluteY() {
       store.commit('incrementPc');
@@ -91,7 +123,13 @@ export const execute = {
       store.commit('incrementPc');
       let hi = this.ram[this.cpu.pc];
 
-      return (hi * 0x0100 + lo + this.cpu.yr) & 0xffff;
+      let target = (hi * 0x0100 + lo + this.cpu.yr) & 0xffff;
+
+      if ((target & 0xff00) != (hi * 0x100)) {
+        this.penaltyCycles += 1;
+      }
+
+      return target;
     },
     // In zeroPage mode, the operand is an address of the form 0x00nn.
     // We can simply return this byte as an address.
@@ -114,7 +152,7 @@ export const execute = {
     // two-byte address, we add the value of the Y register to determine
     // the final "effective" address.
     //
-    // TODO: As with other indexed modes, a change in page costs an additional
+    // As with absolute indexed modes, a change in page costs an additional
     // clock cycle.
     indirectIndexed() {
       store.commit('incrementPc');
@@ -122,7 +160,13 @@ export const execute = {
       let lo = this.ram[zeroPageAddress];
       let hi = this.ram[zeroPageAddress + 1];
 
-      return (hi * 0x0100 + lo + this.cpu.yr) & 0xffff
+      let target = (hi * 0x0100 + lo + this.cpu.yr) & 0xffff;
+
+      if ((target & 0xff00) != (hi * 0x100)) {
+        this.penaltyCycles += 1;
+      }
+
+      return target;
     },
     // In "Indexed, Indirect" mode, the 8-bit operand is added to the
     // X register. The result is the low byte of a little-endian two-byte
@@ -163,56 +207,97 @@ export const execute = {
         this.znFlags(this.ram[address]);
       }
     },
-    // TODO: cycle penalty if branch taken or page boundary crossed
     BCC(address) {
       if (!this.flagStatus(constants.flags.SR_CARRY)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+
+        this.penaltyCycles += 1;
+        if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
+          this.penaltyCycles += 1;
+        }
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
     BCS(address) {
       if (this.flagStatus(constants.flags.SR_CARRY)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+
+        this.penaltyCycles += 1;
+        if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
+          this.penaltyCycles += 1;
+        }
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
     BEQ(address) {
       if (this.flagStatus(constants.flags.SR_ZERO)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+
+        this.penaltyCycles += 1;
+        if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
+          this.penaltyCycles += 1;
+        }
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
     BMI(address) {
       if (this.flagStatus(constants.flags.SR_NEGATIVE)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+
+        this.penaltyCycles += 1;
+        if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
+          this.penaltyCycles += 1;
+        }
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
     BNE(address) {
       if (!this.flagStatus(constants.flags.SR_ZERO)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+
+        this.penaltyCycles += 1;
+        if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
+          this.penaltyCycles += 1;
+        }
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
     BPL(address) {
       if (!this.flagStatus(constants.flags.SR_NEGATIVE)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+
+        this.penaltyCycles += 1;
+        if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
+          this.penaltyCycles += 1;
+        }
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
+    // 650vue pretends BRK triggers a non-maskable interrupt, because
+    // the monitor lives in the terminal, outside of the virtual CPU.
     BRK() {
       store.commit('setFlag', constants.flags.SR_BREAK);
-      this.stop();
+      this.nmi = true;
     },
     BVC(address) {
       if (!this.flagStatus(constants.flags.SR_OVERFLOW)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+
+        this.penaltyCycles += 1;
+        if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
+          this.penaltyCycles += 1;
+        }
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
     BVS(address) {
       if (this.flagStatus(constants.flags.SR_OVERFLOW)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);
+
+        this.penaltyCycles += 1;
+        if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
+          this.penaltyCycles += 1;
+        }
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
@@ -368,6 +453,7 @@ export const execute = {
       store.commit('setFlag', constants.flags.SR_INTERRUPT);
     },
     STA(address) {
+      this.penaltyCycles = 0; // no penalty for indexed stores
       store.commit('writeRam', { address: address, value: this.cpu.ac });
     },
     TAX() {
