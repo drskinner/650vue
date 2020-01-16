@@ -36,15 +36,23 @@ export const opcodes = new Map(
     [0x5e, { opcode: 'LSR', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0x60, { opcode: 'RTS', bytes: 1, cycles: 6, mode: 'implied' }],
+    [0x61, { opcode: 'ADC', bytes: 2, cycles: 6, mode: 'indexedIndirect' }],
+    [0x65, { opcode: 'ADC', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0x66, { opcode: 'ROR', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0x68, { opcode: 'PLA', bytes: 1, cycles: 4, mode: 'implied' }],
+    [0x69, { opcode: 'ADC', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0x6a, { opcode: 'ROR', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x6c, { opcode: 'JMP', bytes: 3, cycles: 5, mode: 'indirect' }],
+    [0x6d, { opcode: 'ADC', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0x6e, { opcode: 'ROR', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0x70, { opcode: 'BVS', bytes: 2, cycles: 2, mode: 'relative' }],
+    [0x71, { opcode: 'ADC', bytes: 2, cycles: 5, mode: 'indirectIndexed' }],
+    [0x75, { opcode: 'ADC', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
     [0x76, { opcode: 'ROR', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x78, { opcode: 'SEI', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x79, { opcode: 'ADC', bytes: 3, cycles: 4, mode: 'absoluteY' }],
+    [0x7d, { opcode: 'ADC', bytes: 3, cycles: 4, mode: 'absoluteX' }],
     [0x7e, { opcode: 'ROR', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x81, { opcode: 'STA', bytes: 2, cycles: 6, mode: 'indexedIndirect' }],
@@ -115,16 +123,24 @@ export const opcodes = new Map(
     [0xde, { opcode: 'DEC', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0xe0, { opcode: 'CPX', bytes: 2, cycles: 2, mode: 'immediate' }],
+    [0xe1, { opcode: 'SBC', bytes: 2, cycles: 6, mode: 'indexedIndirect' }],
     [0xe4, { opcode: 'CPX', bytes: 2, cycles: 3, mode: 'zeroPage' }],
+    [0xe5, { opcode: 'SBC', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0xe6, { opcode: 'INC', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0xe8, { opcode: 'INX', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xe9, { opcode: 'SBC', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xea, { opcode: 'NOP', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xec, { opcode: 'CPX', bytes: 3, cycles: 4, mode: 'absolute' }],
+    [0xed, { opcode: 'SBC', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xee, { opcode: 'INC', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0xf0, { opcode: 'BEQ', bytes: 2, cycles: 2, mode: 'relative' }],
+    [0xf1, { opcode: 'SBC', bytes: 2, cycles: 6, mode: 'indirectIndexed' }],
+    [0xf5, { opcode: 'SBC', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
     [0xf6, { opcode: 'INC', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0xf8, { opcode: 'SED', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xf9, { opcode: 'SBC', bytes: 3, cycles: 4, mode: 'absoluteY' }],
+    [0xfd, { opcode: 'SBC', bytes: 3, cycles: 4, mode: 'absoluteX' }],
     [0xfe, { opcode: 'INC', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x100, { opcode: '???', bytes: 1, cycles: 0, mode: 'implied' }]

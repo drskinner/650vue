@@ -230,6 +230,38 @@ export const execute = {
     //
     // OPCODES
     //
+    // ADC can seem very complicated, especially with respect to the behaviour
+    // of the OVERFLOW flag. There's lots of material online about 1s- and
+    // 2s-complements, signed 8-bit integers, and clever XORs but here,
+    // performance isn't an issue, so I can try something a little more readable.
+    //
+    // TODO: Also, Decimal Mode is a fun complication that I'm totally ignoring for now.
+    //
+    ADC(address) {
+      let signedAcc = this.byteToSignedInt(this.cpu.ac);
+      let signedRam = this.byteToSignedInt(this.ram[address]);
+      let signedSum = signedAcc + signedRam;
+
+      if (signedSum > 127 || signedSum < -128) {
+        store.commit('setFlag', constants.flags.SR_OVERFLOW);
+      } else {
+        store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+      }
+
+      let sum = this.cpu.ac + this.ram[address];
+      if (this.flagStatus(constants.flags.SR_CARRY)) {
+        sum += 1;
+      }
+
+      if (sum > 0xff) {
+        store.commit('setFlag', constants.flags.SR_CARRY);
+      } else {
+        store.commit('clearFlag', constants.flags.SR_CARRY);
+      }
+
+      this.cpu.ac = sum & 0xff;
+      this.znFlags(this.cpu.ac);
+    },
     ASL(address) {
       if (address === null) {
         if (this.cpu.ac & 0x80) {
@@ -557,6 +589,38 @@ export const execute = {
       let hi = this.stackPull();
 
       store.commit('writeRegister', { register: 'pc', value: (hi << 8) + lo });
+    },
+    // SBC is pretty confusing, but it turns out that you can subtract
+    // by inverting the operand and just adding, which is something you
+    // can do in conventional arithmetic.
+    //
+    // TODO: This facile approach won't work in Decimal Mode.
+    SBC(address) {
+      let operand = this.ram[address] ^ 0xff;
+
+      let signedAcc = this.byteToSignedInt(this.cpu.ac);
+      let signedRam = this.byteToSignedInt(operand);
+      let signedSum = signedAcc + signedRam;
+
+      if (signedSum > 127 || signedSum < -128) {
+        store.commit('setFlag', constants.flags.SR_OVERFLOW);
+      } else {
+        store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+      }
+
+      let sum = this.cpu.ac + operand;
+      if (this.flagStatus(constants.flags.SR_CARRY)) {
+        sum += 1;
+      }
+
+      if (sum > 0xff) {
+        store.commit('setFlag', constants.flags.SR_CARRY);
+      } else {
+        store.commit('clearFlag', constants.flags.SR_CARRY);
+      }
+
+      this.cpu.ac = sum & 0xff;
+      this.znFlags(this.cpu.ac);
     },
     SEC() {
       store.commit('setFlag', constants.flags.SR_CARRY);
