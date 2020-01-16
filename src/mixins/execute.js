@@ -5,12 +5,9 @@ import { opcodes } from '@/opcodes'
 export const execute = {
   methods: {
     //
-    // step() is the main function.
-    // It looks up the opcode, figures out what memory
-    // to operate on based on the address mode, calls
-    // the function for the opcode, and finally
-    // increments the clock and program counter.
-    //
+    // tick() handles the "clock". Currently executes
+    // a certain number of cycles per tick at regular
+    // intervals.
     tick() {
       let tickCycles = 5000;
       let instructionCycles = 0;
@@ -29,8 +26,17 @@ export const execute = {
       //   TODO: jump to IRQ vector and continue execution
       // }
 
+      // something, something, interrupt, frame rate, something.
       store.dispatch('refreshVideo');
     },
+    //
+    // step() is the main function.
+    // It looks up the opcode, figures out what memory to operate
+    // on based on the address mode, calls the function to run 
+    // the opcode, and finally increments the program counter.
+    // Return value: the base cycle count for the instruction 
+    // being run before any cycle penalties are applied.
+    //
     step() {
       let byte = this.ram[this.cpu.pc];
       let instruction = opcodes.get(byte);
@@ -42,6 +48,7 @@ export const execute = {
       this.runCycles += instruction.cycles + this.penaltyCycles;
       store.commit('incrementPc');
 
+      // we want the display to refresh in single-step mode.
       if (!this.isRunning) {
         store.dispatch('refreshVideo');
       }
@@ -64,6 +71,24 @@ export const execute = {
     // Two's complement by hand...
     byteToSignedInt(signedByte) {
       return (signedByte & 0x80) ? -((signedByte ^ 0xff) + 1) : signedByte;
+    },
+    //
+    // Top-down stack. Write a byte on page 0x01 at the location indicated by
+    // the stack pointer, and decrement the pointer. The stack pointer does not
+    // care if we overflow; 0x100 will roll over to 0x1ff.
+    //
+    stackPush(byte) {
+      store.commit('writeRam', { address: 0x0100 + this.cpu.sp, value: byte });
+      store.commit('decrementRegister', 'sp');
+    },
+    //
+    // Increment the stack pointer, and return the byte at that new location,
+    // which will become the next available location on the stack. The stack
+    // pointer will happily underflow; 0x1ff will roll over to 0x100.
+    //
+    stackPull() {
+      store.commit('incrementRegister', 'sp');
+      return this.ram[(0x0100 + this.cpu.sp) & 0x01ff];
     },
     //
     // ADDRESS MODES
@@ -398,6 +423,25 @@ export const execute = {
     },
     NOP() {
       return;
+    },
+    PHA() {
+      this.stackPush(this.cpu.ac);
+    },
+    // Pushing the status register is a bit weird; the BREAK flag does not 
+    // physically exist in the processor and the UNUSED flag always reads high.
+    // In VICE 128, even when you push 0x00 on the stack it comes back 0x30.
+    PHP() {
+      this.stackPush(this.cpu.sr | 0x30);
+    },
+    PLA() {
+      store.commit('writeRegister', { register: 'ac', value: this.stackPull() });
+      this.znFlags(this.cpu.ac);
+    },
+    // PLP has similar bit weirdness as in PHP.
+    // There's no direct way to test the UNUSED and BREAK flags anyway.
+    // I'm going to leave the BREAK flag alone even if that's not 100% accurate.
+    PLP() {
+      store.commit('writeRegister', { register: 'ac', value: (this.stackPull() | 0x20) });
     },
     ROL(address) {
       let cachedCarryBit = this.flagStatus(constants.flags.SR_CARRY);

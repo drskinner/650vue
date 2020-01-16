@@ -38,7 +38,7 @@ export default new Vuex.Store({
       cpu.xr = 0x00;
       cpu.yr = 0x00;
       cpu.sp = 0xfd; // TODO: investigate real behaviour of reset
-      cpu.sr = 0x20;
+      cpu.sr = 0x20; // The UNUSED status flag is always set
     },
     incrementPc({ cpu }) {
       cpu.pc = (cpu.pc + 1) & 0xffff;
@@ -61,9 +61,7 @@ export default new Vuex.Store({
     },
     clearFlag({ cpu }, flag) {
       cpu.sr &= (~flag & 0xff);
-    },
-    // TODO:
-    // * push/pull to stack
+    }
   },
   actions: {
     resetCpu({ commit }) { // destructured shorthand for context.commit
