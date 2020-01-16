@@ -69,7 +69,6 @@ export default {
     },
     error() {
       this.outputLine('?');
-      return;
     },
     clearScreen() {
       for (let i = 0x1000; i < 0x13e8; i += 1) {
@@ -124,7 +123,6 @@ export default {
       }
 
       store.dispatch('refreshVideo');
-      return;
     },
     showRegisters() {
       this.outputLine('   PC  SR AC XR YR SP');
@@ -160,7 +158,17 @@ export default {
                    { register: 'sp', value: this.stringToByte(parts[6]) });                                                         
 
       this.showRegisters();
-      return;
+    },
+    setPc() {
+      let parts = this.command.split(' ');
+
+      if (parts.length < 2) {
+        this.error();
+        return;
+      }
+
+      store.commit('writeRegister', { register: 'pc',
+                                      value: this.stringToWord(parts[1]) });
     },
     load(){
       let parts = this.command.split(' ');
@@ -223,6 +231,9 @@ export default {
           break;
         case 'm':
           this.showMemory();
+          break;
+        case 'p':
+          this.setPc();
           break;
         case 'r':
           this.showRegisters();

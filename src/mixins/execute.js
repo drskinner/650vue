@@ -384,9 +384,22 @@ export const execute = {
       store.commit('incrementRegister', 'yr');
       this.znFlags(this.cpu.yr);
     },
-    // Because step() will increment the PC, we'll
-    // JMP to address - 1.
+    // Because step() will increment the PC before the next instruction
+    // is evaluated, we'll JMP to address - 1.
     JMP(address) {
+      store.commit('writeRegister', { register: 'pc', value: address - 1 });
+    },
+    // JSR pushes the return address minus 0x01 onto the stack.
+    // RTS grabs the return address and increments the program counter
+    // as part of its execution. As with JMP, we'll JSR to address - 1,
+    // because PC increment.
+    //
+    // Remember, addresses are little-endian. High byte gets pushed
+    // first, followed by low byte.
+    JSR(address) {
+      this.stackPush(this.cpu.pc >> 8);
+      this.stackPush(this.cpu.pc & 0x00ff);
+
       store.commit('writeRegister', { register: 'pc', value: address - 1 });
     },
     LDA(address) {
@@ -486,6 +499,15 @@ export const execute = {
                                    value: ((this.ram[address] >> 1) & 0xff) + (cachedCarryBit * 0x80) });
         this.znFlags(this.ram[address]);
       }
+    },
+    // RTS should pull the return address minus one as JSR pushed
+    // to the stack. Conveniently, the PC increment will ensure that
+    // we resume execution at the instruction following the JSR.
+    RTS() {
+      let lo = this.stackPull();
+      let hi = this.stackPull();
+
+      store.commit('writeRegister', { register: 'pc', value: (hi << 8) + lo });
     },
     SEC() {
       store.commit('setFlag', constants.flags.SR_CARRY);

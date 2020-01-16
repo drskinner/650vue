@@ -40,6 +40,11 @@ export default new Vuex.Store({
       cpu.sp = 0xfd; // TODO: investigate real behaviour of reset
       cpu.sr = 0x20; // The UNUSED status flag is always set
     },
+    clearStack({ ram }) {
+      for (let i = 0x0100; i <= 0x01fd; i += 1) {
+        ram[i] = 0x00;
+      }
+    },
     incrementPc({ cpu }) {
       cpu.pc = (cpu.pc + 1) & 0xffff;
     },
@@ -67,6 +72,7 @@ export default new Vuex.Store({
     resetCpu({ commit }) { // destructured shorthand for context.commit
       commit('resetRegisters');
       commit('resetPc');
+      commit('clearStack');
     },
     refreshVideo({ commit }) {
       commit('updateVideoChecksum');
