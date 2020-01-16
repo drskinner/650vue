@@ -94,27 +94,35 @@ export const opcodes = new Map(
     [0xc1, { opcode: 'CMP', bytes: 2, cycles: 6, mode: 'indexedIndirect' }],
     [0xc4, { opcode: 'CPY', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0xc5, { opcode: 'CMP', bytes: 2, cycles: 3, mode: 'zeroPage' }],
+    [0xc6, { opcode: 'DEC', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0xc8, { opcode: 'INY', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xc9, { opcode: 'CMP', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xca, { opcode: 'DEX', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xcc, { opcode: 'CPY', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xcd, { opcode: 'CMP', bytes: 3, cycles: 4, mode: 'absolute' }],
+    [0xce, { opcode: 'DEC', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0xd0, { opcode: 'BNE', bytes: 2, cycles: 2, mode: 'relative' }],
     [0xd1, { opcode: 'CMP', bytes: 2, cycles: 6, mode: 'indirectIndexed' }],
     [0xd5, { opcode: 'CMP', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
+    [0xd6, { opcode: 'DEC', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0xd8, { opcode: 'CLD', bytes: 1, cycles: 2, mode: 'implied' }],
     [0xd9, { opcode: 'CMP', bytes: 3, cycles: 4, mode: 'absoluteY' }],
     [0xdd, { opcode: 'CMP', bytes: 3, cycles: 4, mode: 'absoluteX' }],
+    [0xde, { opcode: 'DEC', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0xe0, { opcode: 'CPX', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0xe4, { opcode: 'CPX', bytes: 2, cycles: 3, mode: 'zeroPage' }],
+    [0xe6, { opcode: 'INC', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0xe8, { opcode: 'INX', bytes: 1, cycles: 2, mode: 'implied' }],
-    [0xec, { opcode: 'CPX', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0xea, { opcode: 'NOP', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xec, { opcode: 'CPX', bytes: 3, cycles: 4, mode: 'absolute' }],
+    [0xee, { opcode: 'INC', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0xf0, { opcode: 'BEQ', bytes: 2, cycles: 2, mode: 'relative' }],
+    [0xf6, { opcode: 'INC', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0xf8, { opcode: 'SED', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0xfe, { opcode: 'INC', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x100, { opcode: '???', bytes: 1, cycles: 0, mode: 'implied' }]
   ]

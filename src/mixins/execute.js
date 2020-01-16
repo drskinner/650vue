@@ -368,6 +368,10 @@ export const execute = {
       }
       this.znFlags(diff)
     },
+    DEC(address) {
+      store.commit('writeRam', { address: address, value: (this.ram[address] - 1) & 0xff });
+      this.znFlags(this.ram[address]);
+    },
     DEX() {
       store.commit('decrementRegister', 'xr');
       this.znFlags(this.cpu.xr);
@@ -375,6 +379,10 @@ export const execute = {
     DEY() {
       store.commit('decrementRegister', 'yr');
       this.znFlags(this.cpu.yr);
+    },
+    INC(address) {
+      store.commit('writeRam', { address: address, value: (this.ram[address] + 1) & 0xff });
+      this.znFlags(this.ram[address]);
     },
     INX() {
       store.commit('incrementRegister', 'xr');
