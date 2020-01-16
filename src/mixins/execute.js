@@ -172,6 +172,24 @@ export const execute = {
       store.commit('incrementPc');
       return (this.ram[this.cpu.pc] + this.cpu.yr) & 0x00ff
     },
+    // Indirect mode is only used with the JMP instruction. The operand contains a
+    // 16-bit address which identifies the location of the low byte of another
+    // 16-bit memory address which is the effective target of the jump.
+    //
+    // NOTE: the real 6502 has a famous bug: if the low byte of the pointer is 0xff,
+    // the the high byte's location is 0x00 and not 0x100 as one would expect. For
+    // example, JMP($C0FF) will get its high byte from $C000 instead of $C100.
+    indirect() {
+      store.commit('incrementPc');
+      let pointerLo = this.ram[this.cpu.pc];
+      store.commit('incrementPc');
+      let pointerHi = this.ram[this.cpu.pc];
+
+      let effectiveLo = (pointerHi * 0x0100 + pointerLo) & 0xffff
+      let effectiveHi = (pointerHi * 0x0100 + ((pointerLo + 1) & 0xff)) & 0xffff
+
+      return (this.ram[effectiveHi] * 0x0100 + this.ram[effectiveLo]) & 0xffff;
+    },
     // Indirect, Indexed mode has, as its operand, a zero-page address that
     // holds the low byte of a little-endian two-byte address. To this
     // two-byte address, we add the value of the Y register to determine

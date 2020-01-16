@@ -78,6 +78,10 @@ export const assembler = {
         case 'immediate':
           targetLo = operand.substring(2, 4);
           break;
+        case 'indirect':
+          targetHi = operand.substring(2, 4);
+          targetLo = operand.substring(4, 6);
+          break;
         case 'indirectIndexed':
         case 'indexedIndirect':
           targetLo = operand.substring(2, 4);

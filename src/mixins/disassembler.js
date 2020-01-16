@@ -48,6 +48,9 @@ export const disassembler = {
             break;
           case 'implied':
             break;
+          case 'indirect':
+            line += `($${this.hexByte(operand2)}${this.hexByte(operand1)})`
+            break;
           case 'indexedIndirect':
             line += `$(${this.hexByte(operand1)},x)`;
             break;

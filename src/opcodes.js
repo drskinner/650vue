@@ -39,6 +39,7 @@ export const opcodes = new Map(
     [0x66, { opcode: 'ROR', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0x68, { opcode: 'PLA', bytes: 1, cycles: 4, mode: 'implied' }],
     [0x6a, { opcode: 'ROR', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x6c, { opcode: 'JMP', bytes: 3, cycles: 5, mode: 'indirect' }],
     [0x6e, { opcode: 'ROR', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0x70, { opcode: 'BVS', bytes: 2, cycles: 2, mode: 'relative' }],
