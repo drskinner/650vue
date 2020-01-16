@@ -78,6 +78,10 @@ export const assembler = {
         case 'immediate':
           targetLo = operand.substring(2, 4);
           break;
+        case 'indirectIndexed':
+        case 'indexedIndirect':
+          targetLo = operand.substring(2, 4);
+          break;
         case 'relative': // this one is tricky! 
           branchTo = this.stringToWord(operand.substring(1, 5));
           relativeTarget = this.signedIntToByte((branchTo - (this.memoryPager + 2)) & 0xff);

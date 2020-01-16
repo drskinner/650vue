@@ -48,6 +48,12 @@ export const disassembler = {
             break;
           case 'implied':
             break;
+          case 'indexedIndirect':
+            line += `$(${this.hexByte(operand1)},x)`;
+            break;
+          case 'indirectIndexed':
+            line += `($${this.hexByte(operand1)}),y`;
+            break;
           case 'relative': {
             let nextAddress = (this.memoryPager + 0x02) & 0xffff
             line += `$${this.hexWord((nextAddress + this.byteToSignedInt(operand1)) & 0xffff)}`;

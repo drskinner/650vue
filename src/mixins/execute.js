@@ -32,9 +32,9 @@ export const execute = {
     //
     // step() is the main function.
     // It looks up the opcode, figures out what memory to operate
-    // on based on the address mode, calls the function to run 
+    // on based on the address mode, calls the function to run
     // the opcode, and finally increments the program counter.
-    // Return value: the base cycle count for the instruction 
+    // Return value: the base cycle count for the instruction
     // being run before any cycle penalties are applied.
     //
     step() {
@@ -427,7 +427,7 @@ export const execute = {
     PHA() {
       this.stackPush(this.cpu.ac);
     },
-    // Pushing the status register is a bit weird; the BREAK flag does not 
+    // Pushing the status register is a bit weird; the BREAK flag does not
     // physically exist in the processor and the UNUSED flag always reads high.
     // In VICE 128, even when you push 0x00 on the stack it comes back 0x30.
     PHP() {
@@ -499,6 +499,12 @@ export const execute = {
     STA(address) {
       this.penaltyCycles = 0; // no penalty for indexed stores
       store.commit('writeRam', { address: address, value: this.cpu.ac });
+    },
+    STX(address) {
+      store.commit('writeRam', { address: address, value: this.cpu.xr });
+    },
+    STY(address) {
+      store.commit('writeRam', { address: address, value: this.cpu.yr });
     },
     TAX() {
       store.commit('writeRegister', { register: 'xr', value: this.cpu.ac });
