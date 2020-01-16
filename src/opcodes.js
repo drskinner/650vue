@@ -12,9 +12,11 @@ export const opcodes = new Map(
     [0x1e, { opcode: 'ASL', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x20, { opcode: 'JSR', bytes: 3, cycles: 6, mode: 'absolute' }],
+    [0x24, { opcode: 'BIT', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0x26, { opcode: 'ROL', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0x28, { opcode: 'PLP', bytes: 1, cycles: 4, mode: 'implied' }],
     [0x2a, { opcode: 'ROL', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x2c, { opcode: 'BIT', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0x2e, { opcode: 'ROL', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0x30, { opcode: 'BMI', bytes: 2, cycles: 2, mode: 'relative' }],

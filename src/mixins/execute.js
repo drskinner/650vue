@@ -265,6 +265,29 @@ export const execute = {
         store.commit('writeRegister', { register: 'pc', value: target });
       }
     },
+    // BIT has always seemed a little weird...
+    // Only flags are affected; not memory or AC.
+    BIT(address) {
+      let tmp = this.cpu.ac & this.ram[address];
+
+      if (tmp === 0) {
+        store.commit('setFlag', constants.flags.SR_ZERO);
+      } else {
+        store.commit('clearFlag', constants.flags.SR_ZERO);
+      }
+
+      if (tmp & constants.flags.SR_NEGATIVE) {
+        store.commit('setFlag', constants.flags.SR_NEGATIVE);
+      } else {
+        store.commit('clearFlag', constants.flags.SR_NEGATIVE);
+      }
+
+      if (tmp & constants.flags.SR_OVERFLOW) {
+        store.commit('setFlag', constants.flags.SR_OVERFLOW);
+      } else {
+        store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+      }
+    },
     BMI(address) {
       if (this.flagStatus(constants.flags.SR_NEGATIVE)) {
         let target = this.cpu.pc + this.byteToSignedInt(this.ram[address]);

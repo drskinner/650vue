@@ -32,7 +32,7 @@ export const assembler = {
         mode = 'immediate';
       } else if (operand.match(/\$(\d|[a-f]){4}$/)) { // $0000
         // TODO: bounds checking for relative branch address
-        mode = (mnemonic[0] === 'B') ? 'relative' : 'absolute';
+        mode = (mnemonic[0] === 'B' && mnemonic[1] !== 'I') ? 'relative' : 'absolute';
       } else if (operand.match(/\$(\d|[a-f]){4},x$/)) { // $0000,x
         mode = 'absoluteX';
       } else if (operand.match(/\$(\d|[a-f]){4},y$/)) { // $0000,y
