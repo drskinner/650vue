@@ -276,6 +276,7 @@ export default {
     text-align: left;
     font-family: monospace, sans-serif;
     font-size: 100%;
+    line-height: 1;
     width: 390px;
     padding: 3px 0 0 5px;
     background-color: black;

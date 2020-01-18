@@ -21,9 +21,9 @@ export default {
     return {
       runCycles: 0,
       penaltyCycles: 0,
-      timer: null,
       irq: false,
-      nmi: false
+      nmi: false,
+      requestReference: null
     }
   },
   watch: {
@@ -43,14 +43,12 @@ export default {
       this.irq = false;
       this.nmi = false;
       store.commit('setIsRunning', true);
-      if (!this.timer) {
-        this.timer = setInterval(() => this.tick(), 10);
-      }
+
+      this.tick();
     },
     stop() {
       store.commit('setIsRunning', false);
-      clearInterval(this.timer);
-      this.timer = null;
+      this.nmi = true;
       store.dispatch('refreshVideo');
     },
     reset() {

@@ -9,7 +9,7 @@ export const execute = {
     // a certain number of cycles per tick at regular
     // intervals.
     tick() {
-      let tickCycles = 5000;
+      let tickCycles = 1000;
       let instructionCycles = 0;
 
       while (tickCycles > 0 && !this.nmi) {
@@ -20,6 +20,7 @@ export const execute = {
       // NMI cannot be ignored!
       if (this.nmi) {
         this.stop();
+        cancelAnimationFrame(this.requestReference);
       }
 
       // if (this.irq) {
@@ -28,6 +29,13 @@ export const execute = {
 
       // something, something, interrupt, frame rate, something.
       store.dispatch('refreshVideo');
+
+      // the cancel seems to slow the memory leak long enough to
+      // allow the garbage collection to catch up a little bit.
+      if (this.isRunning) {
+        cancelAnimationFrame(this.requestReference);
+        this.requestReference = requestAnimationFrame(this.tick);
+      }
     },
     //
     // step() is the main function.
