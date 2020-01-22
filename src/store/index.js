@@ -37,8 +37,10 @@ export default new Vuex.Store({
       cpu.ac = 0x00;
       cpu.xr = 0x00;
       cpu.yr = 0x00;
-      cpu.sp = 0xfd; // TODO: investigate real behaviour of reset
-      cpu.sr = 0x20; // The UNUSED status flag is always set
+      cpu.sp = 0xfd; // TODO: investigate real behaviour of reset.
+      cpu.sr = 0x24; // The UNUSED status flag is always set.
+                     // Also set INTERRUPT disable flag so we don't
+                     // service IRQs before the vector is defined.
     },
     clearStack({ ram }) {
       for (let i = 0x0100; i <= 0x01fd; i += 1) {

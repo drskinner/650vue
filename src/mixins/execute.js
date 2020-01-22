@@ -9,7 +9,7 @@ export const execute = {
     // a certain number of cycles per tick at regular
     // intervals.
     tick() {
-      let tickCycles = 1000;
+      let tickCycles = 5000;
       let instructionCycles = 0;
 
       while (tickCycles > 0 && !this.nmi) {
@@ -21,11 +21,19 @@ export const execute = {
       if (this.nmi) {
         this.stop();
         cancelAnimationFrame(this.requestReference);
-      }
+      } else if (!this.flagStatus(constants.flags.SR_INTERRUPT)) {
+        this.stackPush((this.cpu.pc & 0xff00) >> 8);
+        this.stackPush(this.cpu.pc & 0xff);
+        this.stackPush(this.cpu.sr | 0x30);
+        this.irq = true;
 
-      // if (this.irq) {
-      //   TODO: jump to IRQ vector and continue execution
-      // }
+        let serviceRoutine = (this.ram[0xffff] << 8) + this.ram[0xfffe];
+        store.commit('writeRegister', { register: 'pc', value: serviceRoutine });
+
+        while (this.irq) {
+          instructionCycles = this.step();
+        }
+      }
 
       // something, something, interrupt, frame rate, something.
       store.dispatch('refreshVideo');
@@ -51,9 +59,8 @@ export const execute = {
       this.penaltyCycles = 0; // reset cycle penalty
 
       let address = this[instruction.mode]();
-
       this[instruction.opcode](address);
-      this.runCycles += instruction.cycles + this.penaltyCycles;
+      //this.runCycles += instruction.cycles + this.penaltyCycles;
       store.commit('incrementPc');
 
       // we want the display to refresh in single-step mode.
@@ -588,6 +595,16 @@ export const execute = {
                                    value: ((this.ram[address] >> 1) & 0xff) + (cachedCarryBit * 0x80) });
         this.znFlags(this.ram[address]);
       }
+    },
+    RTI() {
+      store.commit('writeRegister', { register: 'sr', value: this.stackPull() });
+
+      let lo = this.stackPull();
+      let hi = this.stackPull();
+      let returnAddress = (((hi << 8) + lo) - 1) & 0xffff;
+      store.commit('writeRegister', { register: 'pc', value: returnAddress });
+
+      this.irq = false;
     },
     // RTS should pull the return address minus one as JSR pushed
     // to the stack. Conveniently, the PC increment will ensure that

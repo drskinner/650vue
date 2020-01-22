@@ -24,6 +24,7 @@ export const opcodes = new Map(
     [0x38, { opcode: 'SEC', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x3e, { opcode: 'ROL', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
+    [0x40, { opcode: 'RTI', bytes: 1, cycles: 6, mode: 'implied' }],
     [0x46, { opcode: 'LSR', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0x48, { opcode: 'PHA', bytes: 1, cycles: 3, mode: 'implied' }],
     [0x4a, { opcode: 'LSR', bytes: 1, cycles: 2, mode: 'implied' }],
