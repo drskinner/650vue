@@ -37,9 +37,9 @@ Loading interrupt-driven timer...
 ; set IRQ vector
 . c000 SEI
 . c001 LDA #$00
-. c003 STA $fffe ; interrupt vector
+. c003 STA $fffe ; vector low byte
 . c006 LDA #$d0
-. c008 STA $ffff
+. c008 STA $ffff ; vector high byte
 . c00b CLI
 
 ; draw clock ad infinitum
@@ -53,14 +53,6 @@ Loading interrupt-driven timer...
 . c019 JMP $c00c
 
 ; interrupt service routine
-; d000 DEC $ff
-; d002 BEQ $d005
-; d004 RTI 
-; d005 LDA $3c
-; d007 STA $ff
-; d00d INC $fe
-; d010 RTI
-
 . d000 PHA
 . d001 LDY #$00
 . d003 DEC $ff   ; decrease timer
