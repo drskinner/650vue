@@ -277,6 +277,10 @@ export const execute = {
       this.cpu.ac = sum & 0xff;
       this.znFlags(this.cpu.ac);
     },
+    AND(address) {
+      store.commit('writeRegister', { register: 'ac', value: (this.cpu.ac & this.ram[address]) });
+      this.znFlags(this.cpu.ac);
+    },
     ASL(address) {
       if (address === null) {
         if (this.cpu.ac & 0x80) {
@@ -499,15 +503,27 @@ export const execute = {
       store.commit('writeRegister', { register: 'pc', value: address - 1 });
     },
     LDA(address) {
-      store.commit('writeRegister', { register: 'ac', value: this.ram[address] });
+      if (address == constants.registers.RANDOM) {
+        store.commit('writeRegister', { register: 'ac', value: Math.floor(Math.random() * 256) });
+      } else {
+        store.commit('writeRegister', { register: 'ac', value: this.ram[address] });
+      }
       this.znFlags(this.cpu.ac);
     },
     LDX(address) {
-      store.commit('writeRegister', { register: 'xr', value: this.ram[address] });
+      if (address == constants.registers.RANDOM) {
+        store.commit('writeRegister', { register: 'xr', value: Math.floor(Math.random() * 256) });
+      } else {
+        store.commit('writeRegister', { register: 'xr', value: this.ram[address] });
+      }
       this.znFlags(this.cpu.xr);
     },
     LDY(address) {
-      store.commit('writeRegister', { register: 'yr', value: this.ram[address] });
+      if (address == constants.registers.RANDOM) {
+        store.commit('writeRegister', { register: 'yr', value: Math.floor(Math.random() * 256) });
+      } else {
+        store.commit('writeRegister', { register: 'yr', value: this.ram[address] });
+      }
       this.znFlags(this.cpu.yr);
     },
     LSR(address) {

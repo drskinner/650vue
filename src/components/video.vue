@@ -34,7 +34,11 @@ export default {
   },
   methods: {
     asciiToChar(value) {
-      return (value < 32) ? ' ' : String.fromCharCode(value);
+      if (value == 0x3c) {
+        return '&lt;'; // need to escape this character!
+      } else {
+        return (value < 32) ? ' ' : String.fromCharCode(value);
+      }
     },
     refresh() {
       let lines = [];

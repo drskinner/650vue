@@ -8,5 +8,8 @@ export default {
     SR_UNUSED:    0x20,
     SR_OVERFLOW:  0x40,
     SR_NEGATIVE:  0x80
+  },
+  registers: {
+    RANDOM: 0x0f
   }
 }
