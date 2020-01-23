@@ -176,6 +176,9 @@ export default {
       axios.get(`disk/${parts[1]}.txt`).then(
         response => {
           response.data.split("\n").forEach(line => {
+            if (line.length === 0) {
+              return;
+            }
             switch(line[0]) {
               case '>':
                 this.command = line;
@@ -184,6 +187,8 @@ export default {
               case '.':
                 this.command = line;
                 this.assemble();
+                break;
+              case ';':
                 break;
               default:
                 this.outputLine(line);
