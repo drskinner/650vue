@@ -472,6 +472,10 @@ export const execute = {
       store.commit('decrementRegister', 'yr');
       this.znFlags(this.cpu.yr);
     },
+    EOR(address) {
+      store.commit('writeRegister', { register: 'ac', value: (this.cpu.ac ^ this.ram[address]) });
+      this.znFlags(this.cpu.ac);
+    },
     INC(address) {
       store.commit('writeRam', { address: address, value: (this.ram[address] + 1) & 0xff });
       this.znFlags(this.ram[address]);
@@ -548,6 +552,10 @@ export const execute = {
     },
     NOP() {
       return;
+    },
+    ORA(address) {
+      store.commit('writeRegister', { register: 'ac', value: (this.cpu.ac | this.ram[address]) });
+      this.znFlags(this.cpu.ac);
     },
     PHA() {
       this.stackPush(this.cpu.ac);

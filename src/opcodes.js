@@ -1,14 +1,22 @@
 export const opcodes = new Map(
   [
     [0x00, { opcode: 'BRK', bytes: 1, cycles: 7, mode: 'implied' }],
+    [0x01, { opcode: 'ORA', bytes: 2, cycles: 6, mode: 'indexedIndirect' }],
+    [0x05, { opcode: 'ORA', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0x06, { opcode: 'ASL', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0x08, { opcode: 'PHP', bytes: 1, cycles: 3, mode: 'implied' }],
+    [0x09, { opcode: 'ORA', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0x0a, { opcode: 'ASL', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x0d, { opcode: 'ORA', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0x0e, { opcode: 'ASL', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0x10, { opcode: 'BPL', bytes: 2, cycles: 2, mode: 'relative' }],
+    [0x11, { opcode: 'ORA', bytes: 2, cycles: 5, mode: 'indirectIndexed' }],
+    [0x15, { opcode: 'ORA', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
     [0x16, { opcode: 'ASL', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x18, { opcode: 'CLC', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x19, { opcode: 'ORA', bytes: 3, cycles: 4, mode: 'absoluteY' }],
+    [0x1d, { opcode: 'ORA', bytes: 3, cycles: 4, mode: 'absoluteX' }],
     [0x1e, { opcode: 'ASL', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x20, { opcode: 'JSR', bytes: 3, cycles: 6, mode: 'absolute' }],
@@ -33,15 +41,23 @@ export const opcodes = new Map(
     [0x3e, { opcode: 'ROL', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x40, { opcode: 'RTI', bytes: 1, cycles: 6, mode: 'implied' }],
+    [0x41, { opcode: 'EOR', bytes: 2, cycles: 6, mode: 'indexedIndirect' }],
+    [0x45, { opcode: 'EOR', bytes: 2, cycles: 3, mode: 'zeroPage' }],
     [0x46, { opcode: 'LSR', bytes: 2, cycles: 5, mode: 'zeroPage' }],
     [0x48, { opcode: 'PHA', bytes: 1, cycles: 3, mode: 'implied' }],
+    [0x49, { opcode: 'EOR', bytes: 2, cycles: 2, mode: 'immediate' }],
     [0x4a, { opcode: 'LSR', bytes: 1, cycles: 2, mode: 'implied' }],
     [0x4c, { opcode: 'JMP', bytes: 3, cycles: 3, mode: 'absolute' }],
+    [0x4d, { opcode: 'EOR', bytes: 3, cycles: 4, mode: 'absolute' }],
     [0x4e, { opcode: 'LSR', bytes: 3, cycles: 7, mode: 'absoluteX' }],
 
     [0x50, { opcode: 'BVC', bytes: 2, cycles: 2, mode: 'relative' }],
+    [0x51, { opcode: 'EOR', bytes: 2, cycles: 5, mode: 'indirectIndexed' }],
+    [0x55, { opcode: 'EOR', bytes: 2, cycles: 4, mode: 'zeroPageX' }],
     [0x56, { opcode: 'LSR', bytes: 2, cycles: 6, mode: 'zeroPageX' }],
     [0x58, { opcode: 'CLI', bytes: 1, cycles: 2, mode: 'implied' }],
+    [0x59, { opcode: 'EOR', bytes: 3, cycles: 4, mode: 'absoluteY' }],
+    [0x5d, { opcode: 'EOR', bytes: 3, cycles: 4, mode: 'absoluteX' }],
     [0x5e, { opcode: 'LSR', bytes: 3, cycles: 6, mode: 'absolute' }],
 
     [0x60, { opcode: 'RTS', bytes: 1, cycles: 6, mode: 'implied' }],
