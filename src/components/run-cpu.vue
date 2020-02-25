@@ -12,7 +12,7 @@
 
 <script>
 import store from '@/store/index'
-import { mapState, mapGetters } from 'vuex';
+import { mapState, mapGetters, mapActions } from 'vuex';
 import { execute } from "@/mixins/execute.js";
 
 export default {
@@ -38,6 +38,7 @@ export default {
     ...mapGetters(['flagStatus'])
   },
   methods: {
+    ...mapActions(['refreshVideo', 'resetCpu']),
     run() {
       this.runCycles = 0;
       this.irq = false;
@@ -49,11 +50,11 @@ export default {
     stop() {
       store.commit('setIsRunning', false);
       this.nmi = true;
-      store.dispatch('refreshVideo');
+      this.refreshVideo();
     },
     reset() {
       this.runCycles = 0;
-      store.dispatch('resetCpu');
+      this.resetCpu();
     }
   }
 }

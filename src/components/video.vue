@@ -23,11 +23,11 @@ export default {
       return this.display.join("\n");
 
     },
-    ...mapState(['videoChecksum'])
+    ...mapState(['videoFrame'])
   },
   watch: {
-    videoChecksum: function (newValue, oldValue) {
-      if (newValue != oldValue) {
+    videoFrame: function (newValue, oldValue) {
+      if (newValue != oldValue && newValue % 2) {
         this.refresh();
       }
     }

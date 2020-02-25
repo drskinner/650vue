@@ -1,15 +1,17 @@
 import store from '@/store/index'
 import constants from '@/const'
 import { opcodes } from '@/opcodes'
+import { mapActions } from 'vuex';
 
 export const execute = {
   methods: {
+    ...mapActions(['refreshVideo']),
     //
     // tick() handles the "clock". Currently executes
     // a certain number of cycles per tick at regular
     // intervals.
     tick() {
-      let tickCycles = 5000;
+      let tickCycles = 10000;
       let instructionCycles = 0;
 
       while (tickCycles > 0 && !this.nmi) {
@@ -36,7 +38,7 @@ export const execute = {
       }
 
       // something, something, interrupt, frame rate, something.
-      store.dispatch('refreshVideo');
+      this.refreshVideo();
 
       // the cancel seems to slow the memory leak long enough to
       // allow the garbage collection to catch up a little bit.
@@ -65,7 +67,7 @@ export const execute = {
 
       // we want the display to refresh in single-step mode.
       if (!this.isRunning) {
-        store.dispatch('refreshVideo');
+        this.refreshVideo();
       }
       return instruction.cycles + this.penaltyCycles;
     },

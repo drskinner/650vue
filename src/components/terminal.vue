@@ -10,7 +10,7 @@ import axios from 'axios'
 import store from '@/store/index'
 import { assembler } from "@/mixins/assembler.js"
 import { disassembler } from "@/mixins/disassembler.js"
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 
 export default {
   name: 'Terminal',
@@ -42,6 +42,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['refreshVideo', 'resetCpu']),
     hexByte(value) {
       return value.toString(16).padStart(2, '0');
     },
@@ -75,7 +76,9 @@ export default {
         store.commit('writeRam', { address: i, value: 0 });
       }
 
-      store.dispatch('refreshVideo');
+      // using mapAction allows us to replace this.$store.dispatch('refreshVideo')
+      // with a simple function call:
+      this.refreshVideo();
     },
     showMemory() {
       // TODO: handle overflow, wrap at MEMTOP
@@ -122,7 +125,7 @@ export default {
                                   value: this.stringToByte(parts[2 + i]) });
       }
 
-      store.dispatch('refreshVideo');
+      this.refreshVideo();
     },
     showRegisters() {
       this.outputLine('   PC  SR AC XR YR SP');
@@ -197,7 +200,7 @@ export default {
           });
 
           this.command = '';
-          store.dispatch('resetCpu');
+          this.resetCpu();
           this.showRegisters();
         },
         error => {

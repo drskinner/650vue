@@ -15,21 +15,17 @@ export default new Vuex.Store({
     },
     ram: Array(65536).fill(0x00),
     isRunning: false,
-    videoChecksum: 0
+    videoFrame: 0
   },
   mutations: {
     setIsRunning(state, running) {
       state.isRunning = running;
     },
-    updateVideoChecksum(state) {
-      let checksum = 0;
-      for (let i = 0x1000; i < 0x13e8; i += 1) {
-        checksum += state.ram[i];
-      }
-      state.videoChecksum = checksum;
+    updateVideoFrame(state) {
+      state.videoFrame = (state.videoFrame + 1) % 60;
     },
-    resetPc(state) {
-      state.cpu.pc = (state.ram[0xfffd] * 0x100) + state.ram[0xfffc];
+    resetPc({ cpu, ram }) { // destructuring multiple properties
+      cpu.pc = (ram[0xfffd] * 0x100) + ram[0xfffc];
     },
     // Reset _could_ actually JMP to the reset vector like it's meant to,
     // and then some code in "ROM" could initialize the registers.
@@ -77,12 +73,12 @@ export default new Vuex.Store({
       commit('clearStack');
     },
     refreshVideo({ commit }) {
-      commit('updateVideoChecksum');
+      commit('updateVideoFrame');
     }
   },
   getters: {
-    flagStatus: (state) => (flag) => {
-      return (state.cpu.sr & flag) > 0;
+    flagStatus: ({ cpu: { sr } }) => (flag) => { // destructure nested property
+      return (sr & flag) > 0;
     }
   },
   modules: {
