@@ -1,0 +1,11 @@
+; Loading Screenful o' dots...
+> fffc 00 c0
+. c000 LDA #$2e
+. c002 LDX #$fa
+. c004 STA $0fff,x
+. c007 STA $10f9,x
+. c00a STA $11f3,x
+. c00d STA $12ed,x
+. c010 DEX 
+. c011 BNE $c004
+. c013 BRK
