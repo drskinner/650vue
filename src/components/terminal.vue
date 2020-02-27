@@ -23,6 +23,9 @@ export default {
     }
   },
   created() {
+    this.outputLine('   Vuepermon Machine-Language Monitor');
+    this.outputLine(' Inspired by Jim Butterfield\'s Supermon');
+    this.outputLine('');
     this.showRegisters();
   },
   computed: {
