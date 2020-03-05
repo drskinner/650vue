@@ -238,6 +238,7 @@ export default {
           this.run();
           break;
         case 'l':
+          this.clearScreen();
           this.load();
           break;
         case 'm':

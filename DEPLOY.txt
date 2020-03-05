@@ -2,30 +2,22 @@ Deploying is a bit of a messy process at the moment:
 
 (1) Merge master into gh-pages branch.
 
-(2) Create the file /vue.config.js with the following.
-    This file will break local development!
+(2) Comment out /dist from the .gitignore file.
 
-// vue.config.js
-module.exports = {
-  publicPath: '/650vue/'
-}
+(3) Run 'npm run build' to make a production build.
 
-(3) Comment out /dist from the .gitignore file.
+(4) git add dist && git commit -m "Another dist subtree commit"
 
-(4) Run 'npm run build' to make a production build.
+(5) git subtree push --prefix dist origin gh-pages
 
-(5) git add dist && git commit -m "Another dist subtree commit"
-
-(6) git subtree push --prefix dist origin gh-pages
-
-(7) Go to https://github.com/drskinner/650vue/settings and
+(6) Go to https://github.com/drskinner/650vue/settings and
     under "GitHub Pages", set the source to 'gh-pages branch'.
     GitHub Pages may take several minutes to build.
 
     It may be necessary to switch to master and back to gh-pages
     to force a rebuild.
 
-(8) The deployed app will be at https://drskinner.github.io/650vue/
+(7) The deployed app will be at https://drskinner.github.io/650vue/
 
-When returning to the dev environment, remove vue.config.js and
-revert the .gitignore file.
+When returning to the dev environment, revert the .gitignore file.
+
