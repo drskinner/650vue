@@ -33,12 +33,13 @@ You can load programs from the virtual disk and run them from the terminal.
             16 lines are displayed, entering <code>d</code> with no arguments will
             continue disassembling from where you left off.
           </dd>
-          <dt><code>g &lt;address&gt;</code></dt>
+          <dt><code>g [&lt;address&gt;]</code></dt>
           <dd>
             Example: <code>g c000</code><br>
             Begin executing code from <code>address</code>. 650Vue will continue execution
             until it encounters a <code>BRK</code> instruction, an illegal opcode, or 
-            receives a Non-Maskable Interrupt telling it to stop.
+            receives a Non-Maskable Interrupt telling it to stop. If you don't supply an
+            address, execution will begin at the program counter's current value.
           </dd>
           <dt><code>l &lt;filename&gt;</code></dt>
           <dd>

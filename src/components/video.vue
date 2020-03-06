@@ -27,7 +27,9 @@ export default {
   },
   watch: {
     videoFrame: function (newValue, oldValue) {
-      if (newValue != oldValue && newValue % 2) {
+      // Only update every other frame when running. (30Hz)
+      // If we're not running, we don't care what frame we're on.
+      if ((newValue != oldValue && newValue % 2) || !store.isRunning) {
         this.refresh();
       }
     }
