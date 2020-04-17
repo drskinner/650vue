@@ -7,6 +7,7 @@
     </div>
     <div id="nav">
       <router-link to="/computer">Computer</router-link> |
+      <router-link to="/manual">Manual</router-link> |
       <router-link to="/terminal-help">Terminal Help</router-link> |
       <router-link to="/about">About</router-link>
     </div>
@@ -18,6 +19,7 @@
 body {
   background-image: url('~@/assets/leather.png');
   margin: none;
+  overflow-y: scroll;
 }
 
 #app {

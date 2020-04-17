@@ -16,7 +16,8 @@ commands. There's no "submit" button; just enter a one-line command into the inp
 RETURN. The terminal will process your command and display the results in the output window.
         </p>
         <p>
-The terminal gives you access to a monitor that is similar to Jim Butterfield's
+The terminal gives you access to a monitor that is similar to the Commodore 128's built-in
+machine language monitor or Jim Butterfield's
 <a href="https://github.com/jblang/supermon64" target="_blank">Supermon</a>
 for Commodore's 8-bit computers. Anyone who used Supermon back in the day should feel right at home
 with 650Vue's monitor&mdash;which, in the interest of terrible wordplay, we can call <em>Vuepermon</em>.

@@ -49,34 +49,34 @@ export default {
 </script>
 
 <style>
-.row {
-  display: flex;
-}
+  .row {
+    display: flex;
+  }
 
-.header {
-  height: 10vw;
-  background-image: url('~@/assets/burl.png');
-}
+  .header {
+    height: 10vw;
+    background-image: url('~@/assets/burl.png');
+  }
 
-.registers {
-  padding-top: 10px;
-}
+  .registers {
+    padding-top: 10px;
+  }
 
-.title {
-  margin: 10px auto 10px auto;
-  height: 8vw;
-}
+  .title {
+    margin: 10px auto 10px auto;
+    height: 8vw;
+  }
 
-img {
-  max-height: 100%;
-}
+  img {
+    max-height: 100%;
+  }
 
-.column-left {
-  flex: 50%;
-  padding-left: 20px;
-}
+  .column-left {
+    flex: 50%;
+    padding-left: 20px;
+  }
 
-.column-right {
-  flex: 50%;
-}
+  .column-right {
+    flex: 50%;
+  }
 </style>
