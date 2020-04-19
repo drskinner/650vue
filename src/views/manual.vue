@@ -24,7 +24,7 @@
       <p>This manual cannot presume to provide all of the technical information
         on the hardware or programming aspects of the simulated 6502 microprocessor.
         If you would like to learn more about 6502 programming, I recommend some
-        <a href="https://www.6502.org/tutorials/" target="_blank">6502 Tutorials</a>.
+        <a href="http://www.6502.org/tutorials/" target="_blank">6502 Tutorials</a>.
         So much for introductory comments! Now lets get started and take a look at
         the components of 650Vue.</p>
     </section>

@@ -176,7 +176,27 @@ export default {
       store.commit('writeRegister', { register: 'pc',
                                       value: this.stringToWord(parts[1]) });
     },
-    load(){
+    directory() {
+      // this will eventually require pagination
+      axios.get(`disk/directory.txt`).then(
+        response => {
+          response.data.split("\n").forEach(line => {
+            if (line.length === 0) {
+              return;
+            }
+
+            this.outputLine(line);
+          });
+
+          this.outputLine(' ');
+          this.showRegisters();
+        },
+        error => {
+          error = 'Directory not found.';
+          this.outputLine(`<span style="color:orange;">Error:</span> ${error}`);
+        });
+    },
+    load() {
       let parts = this.command.split(' ');
 
       axios.get(`disk/${parts[1]}.txt`).then(
@@ -252,6 +272,9 @@ export default {
             break;
         case 'z':
           this.clearScreen();
+          break;
+        case '$':
+          this.directory();
           break;
         case '>':
           this.writeMemory();

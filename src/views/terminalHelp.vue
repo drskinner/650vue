@@ -73,6 +73,10 @@ You can load programs from the virtual disk and run them from the terminal.
             Fill screen RAM with zeroes and force a screen refresh, effectively clearing
             the video display.
           </dd>
+          <dt><code>$</code></dt>
+          <dd>
+            List a directory of the files on the virtual disk.
+          </dd>
           <dt><code>> &lt;address&gt; &lt;byte&gt; [&lt;byte&gt; &lt;byte&gt; ...]</code></dt>
           <dd>
             Example: <code>> c010 48 65 6c 6c 6f 2c 20</code><br>
