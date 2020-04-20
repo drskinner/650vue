@@ -27,6 +27,12 @@
         <a href="http://www.6502.org/tutorials/" target="_blank">6502 Tutorials</a>.
         So much for introductory comments! Now lets get started and take a look at
         the components of 650Vue.</p>
+      <p><b>Quick Start:</b> If you just want to try running some software from the
+        terminal, type <code>$</code> into the terminal input window and press RETURN.
+        This will give you a listing of all the files on disk. To load Conway's Game
+        of Life, enter <code>l conway</code> (<code>l</code> as in <code>load</code>)
+        into the terminal. Once the program has loaded, press the <b>RUN</b> button or
+        follow the on-screen instructions to run the simulation.</p>
     </section>
     
     <section id="manual-registers">
