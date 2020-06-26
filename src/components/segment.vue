@@ -1,13 +1,13 @@
 <template>
   <span>
-  <span v-if="this.size === 'word'">
-    <img :src="require(`@/assets/digit_${hex[0]}.png`)">
-    <img :src="require(`@/assets/digit_${hex[1]}.png`)">
-  </span>
-  <span>
-    <img :src="require(`@/assets/digit_${hex[2]}.png`)">
-    <img :src="require(`@/assets/digit_${hex[3]}.png`)">
-  </span>
+    <span v-if="this.size === 'word'">
+      <img class="digit" :src="require(`@/assets/digit_${hex[0]}.png`)">
+      <img class="digit" :src="require(`@/assets/digit_${hex[1]}.png`)">
+    </span>
+    <span>
+      <img class="digit" :src="require(`@/assets/digit_${hex[2]}.png`)">
+      <img class="digit" :src="require(`@/assets/digit_${hex[3]}.png`)">
+    </span>
   </span>
 </template>
 
@@ -32,7 +32,7 @@ export default {
 </script>
 
 <style scoped>
-  img {
-    height: 76px;
-  }
+.digit {
+  height: 76px;
+}
 </style>

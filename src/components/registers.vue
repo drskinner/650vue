@@ -1,29 +1,27 @@
 <template>
-  <div>
-    <b>AC</b> <Segment :value="this.registers.ac" size='byte' />
-    <b> XR</b> <Segment :value="this.registers.xr" />
-    <b> YR</b> <Segment :value="this.registers.yr" />
+  <div class='registers-container'>
+    <b>AC</b> <Segment :value="cpu.ac" size='byte' />
+    <b> XR</b> <Segment :value="cpu.xr" />
+    <b> YR</b> <Segment :value="cpu.yr" />
   </div>
 </template>
 
 <script>
-import store from '@/store/index'
-import Segment from '@/components/segment'
+import Segment from '@/components/segment';
+import { mapState } from 'vuex';
 
 export default {
   components: {
     Segment,
   },
   computed: {
-    registers() {
-      return store.state.cpu;
-    }
+    ...mapState(['cpu'])
   }
 }
 </script>
 
 <style scoped>
-  div {
-    padding-right: 28px;
-  }
+.registers-container {
+  padding-right: 28px;
+}
 </style>
