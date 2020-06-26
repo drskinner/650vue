@@ -1,5 +1,4 @@
-import { opcodes } from '@/opcodes'
-import store from '@/store/index'
+import { opcodes } from '@/opcodes';
 
 export const assembler = {
   methods: {
@@ -63,8 +62,7 @@ export const assembler = {
         return;
       }
 
-      store.commit('writeRam', { address: this.memoryPager,
-                                 value: instruction.byte });
+      this.writeRam({ address: this.memoryPager, value: instruction.byte });
 
       let targetLo, targetHi, branchTo, relativeTarget;
 
@@ -100,12 +98,10 @@ export const assembler = {
 
       // little-endian; write low byte of 16-bit operands first
       if (targetLo) {
-        store.commit('writeRam', { address: this.memoryPager + 1,
-                                   value: this.stringToByte(targetLo) });
+        this.writeRam({ address: this.memoryPager + 1, value: this.stringToByte(targetLo) });
       }
       if (targetHi) {
-        store.commit('writeRam', { address: this.memoryPager + 2,
-                                   value: this.stringToByte(targetHi) });
+        this.writeRam({ address: this.memoryPager + 2, value: this.stringToByte(targetHi) });
       }
     },
   }

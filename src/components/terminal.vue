@@ -6,11 +6,10 @@
 </template>
 
 <script>
-import axios from 'axios'
-import store from '@/store/index'
-import { assembler } from "@/mixins/assembler.js"
-import { disassembler } from "@/mixins/disassembler.js"
-import { mapState, mapActions } from 'vuex';
+import axios from 'axios';
+import { assembler } from "@/mixins/assembler.js";
+import { disassembler } from "@/mixins/disassembler.js";
+import { mapActions, mapMutations, mapState } from 'vuex';
 
 export default {
   name: 'Terminal',
@@ -22,20 +21,14 @@ export default {
       monitor: Array(20).fill('')
     }
   },
-  created() {
-    this.outputLine('   Vuepermon Machine-Language Monitor');
-    this.outputLine(' Inspired by Jim Butterfield\'s Supermon');
-    this.outputLine('');
-    this.showRegisters();
-  },
   computed: {
+    ...mapState(['isRunning', 'cpu', 'ram']),
     output() {
       return this.monitor.join("\n");
     },
     active() {
       return this.isRunning ? 'inactive' : 'active';
-    },
-    ...mapState(['isRunning', 'cpu', 'ram'])
+    }
   },
   watch: {
     isRunning: function (newValue, oldValue) {
@@ -44,8 +37,15 @@ export default {
       }
     }
   },
+  created() {
+    this.outputLine('   Vuepermon Machine-Language Monitor');
+    this.outputLine(' Inspired by Jim Butterfield\'s Supermon');
+    this.outputLine('');
+    this.showRegisters();
+  },
   methods: {
     ...mapActions(['refreshVideo', 'resetCpu']),
+    ...mapMutations(['setIsRunning', 'writeRam', 'writeRegister']),
     hexByte(value) {
       return value.toString(16).padStart(2, '0');
     },
@@ -76,7 +76,7 @@ export default {
     },
     clearScreen() {
       for (let i = 0x1000; i < 0x13e8; i += 1) {
-        store.commit('writeRam', { address: i, value: 0 });
+        this.writeRam({ address: i, value: 0 });
       }
 
       // using mapAction allows us to replace this.$store.dispatch('refreshVideo')
@@ -124,8 +124,8 @@ export default {
       // rewrite with shift or similar? (see Ruby 6502)
       // loop through additional parts
       for (let i = 0; i < (parts.length - 2); i += 1) {
-        store.commit('writeRam', { address: startAddress + i,
-                                  value: this.stringToByte(parts[2 + i]) });
+        this.writeRam({ address: startAddress + i,
+                        value: this.stringToByte(parts[2 + i]) });
       }
 
       this.refreshVideo();
@@ -150,18 +150,12 @@ export default {
         return;
       }
 
-      store.commit('writeRegister', 
-                   { register: 'pc', value: this.stringToWord(parts[1]) });
-      store.commit('writeRegister', 
-                   { register: 'sr', value: this.stringToByte(parts[2]) });
-      store.commit('writeRegister', 
-                   { register: 'ac', value: this.stringToByte(parts[3]) });
-      store.commit('writeRegister', 
-                   { register: 'xr', value: this.stringToByte(parts[4]) });
-      store.commit('writeRegister', 
-                   { register: 'yr', value: this.stringToByte(parts[5]) });
-      store.commit('writeRegister', 
-                   { register: 'sp', value: this.stringToByte(parts[6]) });                                                         
+      this.writeRegister({ register: 'pc', value: this.stringToWord(parts[1]) });
+      this.writeRegister({ register: 'sr', value: this.stringToByte(parts[2]) });
+      this.writeRegister({ register: 'ac', value: this.stringToByte(parts[3]) });
+      this.writeRegister({ register: 'xr', value: this.stringToByte(parts[4]) });
+      this.writeRegister({ register: 'yr', value: this.stringToByte(parts[5]) });
+      this.writeRegister({ register: 'sp', value: this.stringToByte(parts[6]) });                                                         
 
       this.showRegisters();
     },
@@ -173,11 +167,10 @@ export default {
         return;
       }
 
-      store.commit('writeRegister', { register: 'pc',
-                                      value: this.stringToWord(parts[1]) });
+      this.writeRegister({ register: 'pc', value: this.stringToWord(parts[1]) });
     },
     directory() {
-      // this will eventually require pagination
+      // TODO: this will eventually require pagination
       axios.get(`disk/directory.txt`).then(
         response => {
           response.data.split("\n").forEach(line => {
@@ -235,11 +228,10 @@ export default {
       let parts = this.command.split(' ');
 
       if (parts[1]) {
-        store.commit('writeRegister',
-                     { register: 'pc', value: this.stringToWord(parts[1]) });
+        this.writeRegister({ register: 'pc', value: this.stringToWord(parts[1]) });
       }
 
-      store.commit('setIsRunning', true);
+      this.setIsRunning(true);
     },
     send() {
       if (this.isRunning) {

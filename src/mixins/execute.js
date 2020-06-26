@@ -1,11 +1,18 @@
-import store from '@/store/index'
-import constants from '@/const'
-import { opcodes } from '@/opcodes'
-import { mapActions } from 'vuex';
+import constants from '@/const';
+import { opcodes } from '@/opcodes';
+import { mapActions, mapMutations } from 'vuex';
 
 export const execute = {
   methods: {
     ...mapActions(['refreshVideo']),
+    ...mapMutations(['clearFlag',
+                     'decrementRegister',
+                     'incrementPc',
+                     'incrementRegister',
+                     'setFlag',
+                     'setIsRunning',
+                     'writeRam',
+                     'writeRegister']),
     //
     // tick() handles the "clock". Currently executes
     // a certain number of cycles per tick at regular
@@ -30,7 +37,7 @@ export const execute = {
         this.irq = true;
 
         let serviceRoutine = (this.ram[0xffff] << 8) + this.ram[0xfffe];
-        store.commit('writeRegister', { register: 'pc', value: serviceRoutine });
+        this.writeRegister({ register: 'pc', value: serviceRoutine });
 
         while (this.irq) {
           instructionCycles = this.step();
@@ -63,7 +70,7 @@ export const execute = {
       let address = this[instruction.mode]();
       this[instruction.opcode](address);
       //this.runCycles += instruction.cycles + this.penaltyCycles;
-      store.commit('incrementPc');
+      this.incrementPc();
 
       // we want the display to refresh in single-step mode.
       if (!this.isRunning) {
@@ -75,14 +82,14 @@ export const execute = {
     // must set the Z and N status flags correctly.
     znFlags(result) {
       if (result === 0) {
-        store.commit('setFlag', constants.flags.SR_ZERO);
+        this.setFlag(constants.flags.SR_ZERO);
       } else {
-        store.commit('clearFlag', constants.flags.SR_ZERO);
+        this.clearFlag(constants.flags.SR_ZERO);
       }
       if ((result & 0x80) === 0) { // MSB indicates negative
-        store.commit('clearFlag', constants.flags.SR_NEGATIVE);
+        this.clearFlag(constants.flags.SR_NEGATIVE);
       } else {
-        store.commit('setFlag', constants.flags.SR_NEGATIVE);
+        this.setFlag(constants.flags.SR_NEGATIVE);
       }
     },
     // Two's complement by hand...
@@ -95,8 +102,8 @@ export const execute = {
     // care if we overflow; 0x100 will roll over to 0x1ff.
     //
     stackPush(byte) {
-      store.commit('writeRam', { address: 0x0100 + this.cpu.sp, value: byte });
-      store.commit('decrementRegister', 'sp');
+      this.writeRam({ address: 0x0100 + this.cpu.sp, value: byte });
+      this.decrementRegister('sp');
     },
     //
     // Increment the stack pointer, and return the byte at that new location,
@@ -104,7 +111,7 @@ export const execute = {
     // pointer will happily underflow; 0x1ff will roll over to 0x100.
     //
     stackPull() {
-      store.commit('incrementRegister', 'sp');
+      this.incrementRegister('sp');
       return this.ram[(0x0100 + this.cpu.sp) & 0x01ff];
     },
     //
@@ -120,20 +127,20 @@ export const execute = {
     // so we can increment the PC (to point at the operand in memory)
     // and return the new PC as an address to be read.
     immediate() {
-      store.commit('incrementPc');
+      this.incrementPc();
       return this.cpu.pc;
     },
     // Relative mode, like immediate mode, will use the byte after
     // the opcode as its operand.
     relative() {
-      store.commit('incrementPc');
+      this.incrementPc();
       return this.cpu.pc;
     },
     // In absolute mode, the operand is a little-endian 2-byte address.
     absolute() {
-      store.commit('incrementPc');
+      this.incrementPc();
       let lo = this.ram[this.cpu.pc];
-      store.commit('incrementPc');
+      this.incrementPc();
       let hi = this.ram[this.cpu.pc];
 
       return hi * 0x0100 + lo;
@@ -144,9 +151,9 @@ export const execute = {
     // When the calculated address is on a different page from the operand
     // address, the instruction will require an extra clock cycle to execute.
     absoluteX() {
-      store.commit('incrementPc');
+      this.incrementPc();
       let lo = this.ram[this.cpu.pc];
-      store.commit('incrementPc');
+      this.incrementPc();
       let hi = this.ram[this.cpu.pc];
 
       let target = (hi * 0x0100 + lo + this.cpu.xr) & 0xffff;
@@ -160,9 +167,9 @@ export const execute = {
     // When the calculated address is on a different page from the operand
     // address, the instruction will require an extra clock cycle to execute.
     absoluteY() {
-      store.commit('incrementPc');
+      this.incrementPc();
       let lo = this.ram[this.cpu.pc];
-      store.commit('incrementPc');
+      this.incrementPc();
       let hi = this.ram[this.cpu.pc];
 
       let target = (hi * 0x0100 + lo + this.cpu.yr) & 0xffff;
@@ -176,17 +183,17 @@ export const execute = {
     // In zeroPage mode, the operand is an address of the form 0x00nn.
     // We can simply return this byte as an address.
     zeroPage() {
-      store.commit('incrementPc');
+      this.incrementPc();
       return this.ram[this.cpu.pc] & 0x00ff; // mask to enforce zero-page
     },
     // In zeroPageX, the X register is added to the operand to get the
     // target address. Overflows "wrap around" so we apply a zero-page mask.
     zeroPageX() {
-      store.commit('incrementPc');
+      this.incrementPc();
       return (this.ram[this.cpu.pc] + this.cpu.xr) & 0x00ff
     },
     zeroPageY() {
-      store.commit('incrementPc');
+      this.incrementPc();
       return (this.ram[this.cpu.pc] + this.cpu.yr) & 0x00ff
     },
     // Indirect mode is only used with the JMP instruction. The operand contains a
@@ -197,9 +204,9 @@ export const execute = {
     // the the high byte's location is 0x00 and not 0x100 as one would expect. For
     // example, JMP($C0FF) will get its high byte from $C000 instead of $C100.
     indirect() {
-      store.commit('incrementPc');
+      this.incrementPc();
       let pointerLo = this.ram[this.cpu.pc];
-      store.commit('incrementPc');
+      this.incrementPc();
       let pointerHi = this.ram[this.cpu.pc];
 
       let effectiveLo = (pointerHi * 0x0100 + pointerLo) & 0xffff
@@ -215,7 +222,7 @@ export const execute = {
     // As with absolute indexed modes, a change in page costs an additional
     // clock cycle.
     indirectIndexed() {
-      store.commit('incrementPc');
+      this.incrementPc();
       let zeroPageAddress = this.ram[this.cpu.pc];
       let lo = this.ram[zeroPageAddress];
       let hi = this.ram[zeroPageAddress + 1];
@@ -237,7 +244,7 @@ export const execute = {
     //  full, rich lives without ever writing code that uses indexed, indirect
     //  addressing." -- Jim Butterfield
     indexedIndirect() {
-      store.commit('incrementPc');
+      this.incrementPc();
       let zeroPageAddress = (this.ram[this.cpu.pc] + this.cpu.xr) & 0xff
       let lo = this.ram[zeroPageAddress] & 0xff
       let hi = this.ram[zeroPageAddress + 1] & 0xff
@@ -260,9 +267,9 @@ export const execute = {
       let signedSum = signedAcc + signedRam;
 
       if (signedSum > 127 || signedSum < -128) {
-        store.commit('setFlag', constants.flags.SR_OVERFLOW);
+        this.setFlag(constants.flags.SR_OVERFLOW);
       } else {
-        store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+        this.clearFlag(constants.flags.SR_OVERFLOW);
       }
 
       let sum = this.cpu.ac + this.ram[address];
@@ -271,34 +278,34 @@ export const execute = {
       }
 
       if (sum > 0xff) {
-        store.commit('setFlag', constants.flags.SR_CARRY);
+        this.setFlag(constants.flags.SR_CARRY);
       } else {
-        store.commit('clearFlag', constants.flags.SR_CARRY);
+        this.clearFlag(constants.flags.SR_CARRY);
       }
 
       this.cpu.ac = sum & 0xff;
       this.znFlags(this.cpu.ac);
     },
     AND(address) {
-      store.commit('writeRegister', { register: 'ac', value: (this.cpu.ac & this.ram[address]) });
+      this.writeRegister({ register: 'ac', value: (this.cpu.ac & this.ram[address]) });
       this.znFlags(this.cpu.ac);
     },
     ASL(address) {
       if (address === null) {
         if (this.cpu.ac & 0x80) {
-          store.commit('setFlag', constants.flags.SR_CARRY);
+          this.setFlag(constants.flags.SR_CARRY);
         } else {
-          store.commit('clearFlag', constants.flags.SR_CARRY);
+          this.clearFlag(constants.flags.SR_CARRY);
         }
         this.cpu.ac = (this.cpu.ac << 1) & 0xff;
         this.znFlags(this.cpu.ac);
       } else {
         if (this.ram[address] & 0x80) {
-          store.commit('setFlag', constants.flags.SR_CARRY);
+          this.setFlag(constants.flags.SR_CARRY);
         } else {
-          store.commit('clearFlag', constants.flags.SR_CARRY);
+          this.clearFlag(constants.flags.SR_CARRY);
         }
-        store.commit('writeRam', { address: address,
+        this.writeRam({ address: address,
                                   value: (this.ram[address] << 1) & 0xff });
         this.znFlags(this.ram[address]);
       }
@@ -311,7 +318,7 @@ export const execute = {
         if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
           this.penaltyCycles += 1;
         }
-        store.commit('writeRegister', { register: 'pc', value: target });
+        this.writeRegister({ register: 'pc', value: target });
       }
     },
     BCS(address) {
@@ -322,7 +329,7 @@ export const execute = {
         if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
           this.penaltyCycles += 1;
         }
-        store.commit('writeRegister', { register: 'pc', value: target });
+        this.writeRegister({ register: 'pc', value: target });
       }
     },
     BEQ(address) {
@@ -333,7 +340,7 @@ export const execute = {
         if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
           this.penaltyCycles += 1;
         }
-        store.commit('writeRegister', { register: 'pc', value: target });
+        this.writeRegister({ register: 'pc', value: target });
       }
     },
     // BIT has always seemed a little weird...
@@ -342,21 +349,21 @@ export const execute = {
       let tmp = this.cpu.ac & this.ram[address];
 
       if (tmp === 0) {
-        store.commit('setFlag', constants.flags.SR_ZERO);
+        this.setFlag(constants.flags.SR_ZERO);
       } else {
-        store.commit('clearFlag', constants.flags.SR_ZERO);
+        this.clearFlag(constants.flags.SR_ZERO);
       }
 
       if (tmp & constants.flags.SR_NEGATIVE) {
-        store.commit('setFlag', constants.flags.SR_NEGATIVE);
+        this.setFlag(constants.flags.SR_NEGATIVE);
       } else {
-        store.commit('clearFlag', constants.flags.SR_NEGATIVE);
+        this.clearFlag(constants.flags.SR_NEGATIVE);
       }
 
       if (tmp & constants.flags.SR_OVERFLOW) {
-        store.commit('setFlag', constants.flags.SR_OVERFLOW);
+        this.setFlag(constants.flags.SR_OVERFLOW);
       } else {
-        store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+        this.clearFlag(constants.flags.SR_OVERFLOW);
       }
     },
     BMI(address) {
@@ -367,7 +374,7 @@ export const execute = {
         if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
           this.penaltyCycles += 1;
         }
-        store.commit('writeRegister', { register: 'pc', value: target });
+        this.writeRegister({ register: 'pc', value: target });
       }
     },
     BNE(address) {
@@ -378,7 +385,7 @@ export const execute = {
         if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
           this.penaltyCycles += 1;
         }
-        store.commit('writeRegister', { register: 'pc', value: target });
+        this.writeRegister({ register: 'pc', value: target });
       }
     },
     BPL(address) {
@@ -389,13 +396,13 @@ export const execute = {
         if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
           this.penaltyCycles += 1;
         }
-        store.commit('writeRegister', { register: 'pc', value: target });
+        this.writeRegister({ register: 'pc', value: target });
       }
     },
     // 650vue pretends BRK triggers a non-maskable interrupt, because
     // the monitor lives in the terminal, outside of the virtual CPU.
     BRK() {
-      store.commit('setFlag', constants.flags.SR_BREAK);
+      this.setFlag(constants.flags.SR_BREAK);
       this.nmi = true;
     },
     BVC(address) {
@@ -406,7 +413,7 @@ export const execute = {
         if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
           this.penaltyCycles += 1;
         }
-        store.commit('writeRegister', { register: 'pc', value: target });
+        this.writeRegister({ register: 'pc', value: target });
       }
     },
     BVS(address) {
@@ -417,28 +424,28 @@ export const execute = {
         if ((target & 0xff00) != (this.cpu.pc & 0xff00)) {
           this.penaltyCycles += 1;
         }
-        store.commit('writeRegister', { register: 'pc', value: target });
+        this.writeRegister({ register: 'pc', value: target });
       }
     },
     CLC() {
-      store.commit('clearFlag', constants.flags.SR_CARRY);
+      this.clearFlag(constants.flags.SR_CARRY);
     },
     CLD() {
-      store.commit('clearFlag', constants.flags.SR_DECIMAL);
+      this.clearFlag(constants.flags.SR_DECIMAL);
     },
     CLI() {
-      store.commit('clearFlag', constants.flags.SR_INTERRUPT);
+      this.clearFlag(constants.flags.SR_INTERRUPT);
     },
     CLV() {
-      store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+      this.clearFlag(constants.flags.SR_OVERFLOW);
     },
     CMP(address) {
       let diff = (this.cpu.ac + 0x100 - this.ram[address]) & 0xff
 
       if (this.cpu.ac >= this.ram[address]) {
-        store.commit('setFlag', constants.flags.SR_CARRY);
+        this.setFlag(constants.flags.SR_CARRY);
       } else {
-        store.commit('clearFlag', constants.flags.SR_CARRY);
+        this.clearFlag(constants.flags.SR_CARRY);
       }
       this.znFlags(diff)
     },
@@ -446,9 +453,9 @@ export const execute = {
       let diff = (this.cpu.xr + 0x100 - this.ram[address]) & 0xff
 
       if (this.cpu.xr >= this.ram[address]) {
-        store.commit('setFlag', constants.flags.SR_CARRY);
+        this.setFlag(constants.flags.SR_CARRY);
       } else { 
-        store.commit('clearFlag', constants.flags.SR_CARRY);
+        this.clearFlag(constants.flags.SR_CARRY);
       }
       this.znFlags(diff)
     },
@@ -456,44 +463,44 @@ export const execute = {
       let diff = (this.cpu.yr + 0x100 - this.ram[address]) & 0xff
 
       if (this.cpu.yr >= this.ram[address]) {
-        store.commit('setFlag', constants.flags.SR_CARRY);
+        this.setFlag(constants.flags.SR_CARRY);
       } else { 
-        store.commit('clearFlag', constants.flags.SR_CARRY);
+        this.clearFlag(constants.flags.SR_CARRY);
       }
       this.znFlags(diff)
     },
     DEC(address) {
-      store.commit('writeRam', { address: address, value: (this.ram[address] - 1) & 0xff });
+      this.writeRam({ address: address, value: (this.ram[address] - 1) & 0xff });
       this.znFlags(this.ram[address]);
     },
     DEX() {
-      store.commit('decrementRegister', 'xr');
+      this.decrementRegister('xr');
       this.znFlags(this.cpu.xr);
     },
     DEY() {
-      store.commit('decrementRegister', 'yr');
+      this.decrementRegister('yr');
       this.znFlags(this.cpu.yr);
     },
     EOR(address) {
-      store.commit('writeRegister', { register: 'ac', value: (this.cpu.ac ^ this.ram[address]) });
+      this.writeRegister({ register: 'ac', value: (this.cpu.ac ^ this.ram[address]) });
       this.znFlags(this.cpu.ac);
     },
     INC(address) {
-      store.commit('writeRam', { address: address, value: (this.ram[address] + 1) & 0xff });
+      this.writeRam({ address: address, value: (this.ram[address] + 1) & 0xff });
       this.znFlags(this.ram[address]);
     },
     INX() {
-      store.commit('incrementRegister', 'xr');
+      this.incrementRegister('xr');
       this.znFlags(this.cpu.xr);
     },
     INY() {
-      store.commit('incrementRegister', 'yr');
+      this.incrementRegister('yr');
       this.znFlags(this.cpu.yr);
     },
     // Because step() will increment the PC before the next instruction
     // is evaluated, we'll JMP to address - 1.
     JMP(address) {
-      store.commit('writeRegister', { register: 'pc', value: address - 1 });
+      this.writeRegister({ register: 'pc', value: address - 1 });
     },
     // JSR pushes the return address minus 0x01 onto the stack.
     // RTS grabs the return address and increments the program counter
@@ -506,48 +513,48 @@ export const execute = {
       this.stackPush(this.cpu.pc >> 8);
       this.stackPush(this.cpu.pc & 0x00ff);
 
-      store.commit('writeRegister', { register: 'pc', value: address - 1 });
+      this.writeRegister({ register: 'pc', value: address - 1 });
     },
     LDA(address) {
       if (address == constants.registers.RANDOM) {
-        store.commit('writeRegister', { register: 'ac', value: Math.floor(Math.random() * 256) });
+        this.writeRegister({ register: 'ac', value: Math.floor(Math.random() * 256) });
       } else {
-        store.commit('writeRegister', { register: 'ac', value: this.ram[address] });
+        this.writeRegister({ register: 'ac', value: this.ram[address] });
       }
       this.znFlags(this.cpu.ac);
     },
     LDX(address) {
       if (address == constants.registers.RANDOM) {
-        store.commit('writeRegister', { register: 'xr', value: Math.floor(Math.random() * 256) });
+        this.writeRegister({ register: 'xr', value: Math.floor(Math.random() * 256) });
       } else {
-        store.commit('writeRegister', { register: 'xr', value: this.ram[address] });
+        this.writeRegister({ register: 'xr', value: this.ram[address] });
       }
       this.znFlags(this.cpu.xr);
     },
     LDY(address) {
       if (address == constants.registers.RANDOM) {
-        store.commit('writeRegister', { register: 'yr', value: Math.floor(Math.random() * 256) });
+        this.writeRegister({ register: 'yr', value: Math.floor(Math.random() * 256) });
       } else {
-        store.commit('writeRegister', { register: 'yr', value: this.ram[address] });
+        this.writeRegister({ register: 'yr', value: this.ram[address] });
       }
       this.znFlags(this.cpu.yr);
     },
     LSR(address) {
       if (address === null) {
         if (this.cpu.ac & 0x01) {
-          store.commit('setFlag', constants.flags.SR_CARRY);
+          this.setFlag(constants.flags.SR_CARRY);
         } else {
-          store.commit('clearFlag', constants.flags.SR_CARRY);
+          this.clearFlag(constants.flags.SR_CARRY);
         }
         this.cpu.ac = (this.cpu.ac >> 1) & 0xff;
         this.znFlags(this.cpu.ac);
       } else {
         if (this.ram[address] & 0x01) {
-          store.commit('setFlag', constants.flags.SR_CARRY);
+          this.setFlag(constants.flags.SR_CARRY);
         } else {
-          store.commit('clearFlag', constants.flags.SR_CARRY);
+          this.clearFlag(constants.flags.SR_CARRY);
         }
-        store.commit('writeRam', { address: address,
+        this.writeRam({ address: address,
                                   value: (this.ram[address] >> 1) & 0xff });
         this.znFlags(this.ram[address]);
       }
@@ -556,7 +563,7 @@ export const execute = {
       return;
     },
     ORA(address) {
-      store.commit('writeRegister', { register: 'ac', value: (this.cpu.ac | this.ram[address]) });
+      this.writeRegister({ register: 'ac', value: (this.cpu.ac | this.ram[address]) });
       this.znFlags(this.cpu.ac);
     },
     PHA() {
@@ -569,33 +576,33 @@ export const execute = {
       this.stackPush(this.cpu.sr | 0x30);
     },
     PLA() {
-      store.commit('writeRegister', { register: 'ac', value: this.stackPull() });
+      this.writeRegister({ register: 'ac', value: this.stackPull() });
       this.znFlags(this.cpu.ac);
     },
     // PLP has similar bit weirdness as in PHP.
     // There's no direct way to test the UNUSED and BREAK flags anyway.
     // I'm going to leave the BREAK flag alone even if that's not 100% accurate.
     PLP() {
-      store.commit('writeRegister', { register: 'ac', value: (this.stackPull() | 0x20) });
+      this.writeRegister({ register: 'ac', value: (this.stackPull() | 0x20) });
     },
     ROL(address) {
       let cachedCarryBit = this.flagStatus(constants.flags.SR_CARRY);
 
         if (address === null) {
         if (this.cpu.ac & 0x80) {
-          store.commit('setFlag', constants.flags.SR_CARRY);
+          this.setFlag(constants.flags.SR_CARRY);
         } else {
-          store.commit('clearFlag', constants.flags.SR_CARRY);
+          this.clearFlag(constants.flags.SR_CARRY);
         }
         this.cpu.ac = ((this.cpu.ac << 1) & 0xff) + cachedCarryBit;
         this.znFlags(this.cpu.ac);
       } else {
         if (this.ram[address] & 0x80) {
-          store.commit('setFlag', constants.flags.SR_CARRY);
+          this.setFlag(constants.flags.SR_CARRY);
         } else {
-          store.commit('clearFlag', constants.flags.SR_CARRY);
+          this.clearFlag(constants.flags.SR_CARRY);
         }
-        store.commit('writeRam', { address: address,
+        this.writeRam({ address: address,
                                    value: ((this.ram[address] << 1) & 0xff) + cachedCarryBit });
         this.znFlags(this.ram[address]);
       }
@@ -605,30 +612,30 @@ export const execute = {
 
         if (address === null) {
         if (this.cpu.ac & 0x01) {
-          store.commit('setFlag', constants.flags.SR_CARRY);
+          this.setFlag(constants.flags.SR_CARRY);
         } else {
-          store.commit('clearFlag', constants.flags.SR_CARRY);
+          this.clearFlag(constants.flags.SR_CARRY);
         }
         this.cpu.ac = ((this.cpu.ac >> 1) & 0xff) + (cachedCarryBit * 0x80);
         this.znFlags(this.cpu.ac);
       } else {
         if (this.ram[address] & 0x01) {
-          store.commit('setFlag', constants.flags.SR_CARRY);
+          this.setFlag(constants.flags.SR_CARRY);
         } else {
-          store.commit('clearFlag', constants.flags.SR_CARRY);
+          this.clearFlag(constants.flags.SR_CARRY);
         }
-        store.commit('writeRam', { address: address,
+        this.writeRam({ address: address,
                                    value: ((this.ram[address] >> 1) & 0xff) + (cachedCarryBit * 0x80) });
         this.znFlags(this.ram[address]);
       }
     },
     RTI() {
-      store.commit('writeRegister', { register: 'sr', value: this.stackPull() });
+      this.writeRegister({ register: 'sr', value: this.stackPull() });
 
       let lo = this.stackPull();
       let hi = this.stackPull();
       let returnAddress = (((hi << 8) + lo) - 1) & 0xffff;
-      store.commit('writeRegister', { register: 'pc', value: returnAddress });
+      this.writeRegister({ register: 'pc', value: returnAddress });
 
       this.irq = false;
     },
@@ -639,7 +646,7 @@ export const execute = {
       let lo = this.stackPull();
       let hi = this.stackPull();
 
-      store.commit('writeRegister', { register: 'pc', value: (hi << 8) + lo });
+      this.writeRegister({ register: 'pc', value: (hi << 8) + lo });
     },
     // SBC is pretty confusing, but it turns out that you can subtract
     // by inverting the operand and just adding, which is something you
@@ -654,9 +661,9 @@ export const execute = {
       let signedSum = signedAcc + signedRam;
 
       if (signedSum > 127 || signedSum < -128) {
-        store.commit('setFlag', constants.flags.SR_OVERFLOW);
+        this.setFlag(constants.flags.SR_OVERFLOW);
       } else {
-        store.commit('clearFlag', constants.flags.SR_OVERFLOW);
+        this.clearFlag(constants.flags.SR_OVERFLOW);
       }
 
       let sum = this.cpu.ac + operand;
@@ -665,55 +672,55 @@ export const execute = {
       }
 
       if (sum > 0xff) {
-        store.commit('setFlag', constants.flags.SR_CARRY);
+        this.setFlag(constants.flags.SR_CARRY);
       } else {
-        store.commit('clearFlag', constants.flags.SR_CARRY);
+        this.clearFlag(constants.flags.SR_CARRY);
       }
 
       this.cpu.ac = sum & 0xff;
       this.znFlags(this.cpu.ac);
     },
     SEC() {
-      store.commit('setFlag', constants.flags.SR_CARRY);
+      this.setFlag(constants.flags.SR_CARRY);
     },
     SED() {
-      store.commit('setFlag', constants.flags.SR_DECIMAL);
+      this.setFlag(constants.flags.SR_DECIMAL);
     },
     SEI() {
-      store.commit('setFlag', constants.flags.SR_INTERRUPT);
+      this.setFlag(constants.flags.SR_INTERRUPT);
     },
     STA(address) {
       this.penaltyCycles = 0; // no penalty for indexed stores
-      store.commit('writeRam', { address: address, value: this.cpu.ac });
+      this.writeRam({ address: address, value: this.cpu.ac });
     },
     STX(address) {
-      store.commit('writeRam', { address: address, value: this.cpu.xr });
+      this.writeRam({ address: address, value: this.cpu.xr });
     },
     STY(address) {
-      store.commit('writeRam', { address: address, value: this.cpu.yr });
+      this.writeRam({ address: address, value: this.cpu.yr });
     },
     TAX() {
-      store.commit('writeRegister', { register: 'xr', value: this.cpu.ac });
+      this.writeRegister({ register: 'xr', value: this.cpu.ac });
       this.znFlags(this.cpu.xr);
     },
     TAY() {
-      store.commit('writeRegister', { register: 'yr', value: this.cpu.ac });
+      this.writeRegister({ register: 'yr', value: this.cpu.ac });
       this.znFlags(this.cpu.yr);
     },
     TSX() {
-      store.commit('writeRegister', { register: 'xr', value: this.cpu.sp });
+      this.writeRegister({ register: 'xr', value: this.cpu.sp });
       this.znFlags(this.cpu.xr);
     },
     TXA() {
-      store.commit('writeRegister', { register: 'ac', value: this.cpu.xr });
+      this.writeRegister({ register: 'ac', value: this.cpu.xr });
       this.znFlags(this.cpu.ac);
     },
     // TXS does not affect status flags
     TXS() {
-      store.commit('writeRegister', { register: 'sp', value: this.cpu.xr });
+      this.writeRegister({ register: 'sp', value: this.cpu.xr });
     },
     TYA() {
-      store.commit('writeRegister', { register: 'ac', value: this.cpu.yr });
+      this.writeRegister({ register: 'ac', value: this.cpu.yr });
       this.znFlags(this.cpu.ac);
     }
   }
