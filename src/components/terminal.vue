@@ -22,7 +22,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['isRunning', 'cpu', 'ram']),
+    ...mapState(['cpu', 'isRunning', 'ram']),
     output() {
       return this.monitor.join("\n");
     },

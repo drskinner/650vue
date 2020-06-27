@@ -26,7 +26,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['isRunning', 'cpu', 'ram']),
+    ...mapState(['cpu', 'isRunning', 'ram']),
     ...mapGetters(['flagStatus'])
   },
   watch: {

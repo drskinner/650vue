@@ -1,5 +1,5 @@
 <template>
-  <div class='registers-container'>
+  <div class="registers-container">
     <b>AC</b> <Segment :value="cpu.ac" size='byte' />
     <b> XR</b> <Segment :value="cpu.xr" />
     <b> YR</b> <Segment :value="cpu.yr" />
