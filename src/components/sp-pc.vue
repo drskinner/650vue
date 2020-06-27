@@ -1,22 +1,20 @@
 <template>
   <div>
-    <b>SP</b> <Segment :value="this.registers.sp" />
-    <b> PC</b> <Segment :value="this.registers.pc" size='word' />
+    <b>SP</b> <Segment :value="cpu.sp" />
+    <b> PC</b> <Segment :value="cpu.pc" size='word' />
   </div>
 </template>
 
 <script>
-import store from '@/store/index'
-import Segment from '@/components/segment'
+import Segment from '@/components/segment';
+import { mapState } from 'vuex';
 
 export default {
   components: {
     Segment
   },
   computed: {
-    registers() {
-      return store.state.cpu;
-    }
+    ...mapState(['cpu'])
   }
 }
 </script>

@@ -2,17 +2,16 @@
   <div>
     Cycles: {{ runCycles }}
     <!-- TODO: Contextually disable buttons -->
-    <button @click="run">RUN</button>
-    <button @click="step">STEP</button>
-    <button @click="stop">STOP</button>
-    <button @click="reset">RESET</button>
+    <button class="control-button" @click="run">RUN</button>
+    <button class="control-button" @click="step">STEP</button>
+    <button class="control-button" @click="stop">STOP</button>
+    <button class="control-button" @click="reset">RESET</button>
     Running: {{ this.isRunning }}
   </div>
 </template>
 
 <script>
-import store from '@/store/index'
-import { mapState, mapGetters, mapActions } from 'vuex';
+import { mapActions, mapGetters, mapMutations, mapState } from 'vuex';
 import { execute } from "@/mixins/execute.js";
 
 export default {
@@ -26,6 +25,10 @@ export default {
       requestReference: null
     }
   },
+  computed: {
+    ...mapState(['cpu', 'isRunning', 'ram']),
+    ...mapGetters(['flagStatus'])
+  },
   watch: {
     isRunning: function (newValue, oldValue) {
       if (newValue === true && oldValue === false) {
@@ -33,22 +36,19 @@ export default {
       }
     }
   },
-  computed: {
-    ...mapState(['isRunning', 'cpu', 'ram']),
-    ...mapGetters(['flagStatus'])
-  },
   methods: {
     ...mapActions(['refreshVideo', 'resetCpu']),
+    ...mapMutations(['setIsRunning']),
     run() {
       this.runCycles = 0;
       this.irq = false;
       this.nmi = false;
-      store.commit('setIsRunning', true);
+      this.setIsRunning(true);
 
       this.tick();
     },
     stop() {
-      store.commit('setIsRunning', false);
+      this.setIsRunning(false);
       this.nmi = true;
       this.refreshVideo();
     },
@@ -61,7 +61,7 @@ export default {
 </script>
 
 <style scoped>
-button {
+.control-button {
   border: none;
   background: url('../assets/button.png') no-repeat top left;
   width: 58px;

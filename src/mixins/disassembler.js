@@ -1,4 +1,4 @@
-import { opcodes } from '@/opcodes'
+import { opcodes } from '@/opcodes';
 
 export const disassembler = {
   methods: {
