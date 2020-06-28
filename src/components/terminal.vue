@@ -169,60 +169,61 @@ export default {
 
       this.writeRegister({ register: 'pc', value: this.stringToWord(parts[1]) });
     },
-    directory() {
+    async directory() {
       // TODO: this will eventually require pagination
-      axios.get(`disk/directory.txt`).then(
-        response => {
-          response.data.split("\n").forEach(line => {
-            if (line.length === 0) {
-              return;
-            }
+      try {
+        const response = await axios.get(`disk/directory.txt`);
 
-            this.outputLine(line);
-          });
-
-          this.outputLine(' ');
-          this.showRegisters();
-        },
-        error => {
-          error = 'Directory not found.';
-          this.outputLine(`<span style="color:orange;">Error:</span> ${error}`);
+        response.data.split("\n").forEach(line => {
+          if (line.length === 0) {
+            return;
+          }
+          this.outputLine(line);
         });
+      } catch(ex) {
+        let error = 'Directory not found.';
+        this.outputLine(`<span style="color:orange;">Error:</span> ${error}`);
+      } finally {
+        this.outputLine(' ');
+        this.showRegisters();
+      }
     },
-    load() {
-      let parts = this.command.split(' ');
+    parseFileInputLine(line) {
+      switch(line[0]) {
+        case '>':
+          this.command = line;
+          this.writeMemory();
+          break;
+        case '.':
+          this.command = line;
+          this.assemble();
+          break;
+        case ';':
+          break;
+        default:
+          this.outputLine(line);
+          break;
+      }
+    },
+    async load() {
+      try {
+        let parts = this.command.split(' ');
+        const response = await axios.get(`disk/${parts[1]}.txt`);
 
-      axios.get(`disk/${parts[1]}.txt`).then(
-        response => {
-          response.data.split("\n").forEach(line => {
-            if (line.length === 0) {
-              return;
-            }
-            switch(line[0]) {
-              case '>':
-                this.command = line;
-                this.writeMemory();
-                break;
-              case '.':
-                this.command = line;
-                this.assemble();
-                break;
-              case ';':
-                break;
-              default:
-                this.outputLine(line);
-                break;
-            }
-          });
-
-          this.command = '';
-          this.resetCpu();
-          this.showRegisters();
-        },
-        error => {
-          error = 'File not found.';
-          this.outputLine(`<span style="color:orange;">Error:</span> ${error}`);
+        response.data.split("\n").forEach(line => {
+          if (line.length === 0) {
+            return;
+          }
+          this.parseFileInputLine(line);
         });
+      } catch(ex) {
+        let error = 'File not found.';
+        this.outputLine(`<span style="color:orange;">Error:</span> ${error}`);
+      } finally {
+        this.command = '';
+        this.resetCpu();
+        this.showRegisters();
+      }
     },
     run() {
       let parts = this.command.split(' ');
