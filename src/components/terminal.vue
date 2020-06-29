@@ -1,7 +1,7 @@
 <template>
   <div>
     <pre v-html="output"></pre>
-    <input id="command" :class="active" maxlength="40" v-model="command" v-on:keyup.enter="send" />
+    <input ref="inputLine" id="command" :class="active" maxlength="40" v-model="command" v-on:keyup.enter="send" />
   </div>
 </template>
 
@@ -34,6 +34,7 @@ export default {
     isRunning: function (newValue, oldValue) {
       if (newValue === false && oldValue === true) {
         this.showRegisters();
+        this.$refs.inputLine.focus();
       }
     }
   },

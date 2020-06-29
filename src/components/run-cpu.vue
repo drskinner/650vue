@@ -1,12 +1,12 @@
 <template>
   <div>
-    Cycles: {{ runCycles }}
+    Running: {{ this.isRunning }}
     <!-- TODO: Contextually disable buttons -->
     <button class="control-button" @click="run">RUN</button>
     <button class="control-button" @click="step">STEP</button>
     <button class="control-button" @click="stop">STOP</button>
     <button class="control-button" @click="reset">RESET</button>
-    Running: {{ this.isRunning }}
+    <input ref="keyboard" class="keyboard" maxlength="0" v-on:keydown="keyMonitor">
   </div>
 </template>
 
@@ -18,7 +18,6 @@ export default {
   mixins: [execute],
   data() {
     return {
-      runCycles: 0,
       penaltyCycles: 0,
       irq: false,
       nmi: false,
@@ -37,13 +36,13 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['refreshVideo', 'resetCpu']),
+    ...mapActions(['processKey', 'refreshVideo', 'resetCpu']),
     ...mapMutations(['setIsRunning']),
     run() {
-      this.runCycles = 0;
       this.irq = false;
       this.nmi = false;
       this.setIsRunning(true);
+      this.$refs.keyboard.focus();
 
       this.tick();
     },
@@ -53,8 +52,10 @@ export default {
       this.refreshVideo();
     },
     reset() {
-      this.runCycles = 0;
       this.resetCpu();
+    },
+    keyMonitor: function(event) {
+      this.processKey(event.key);
     }
   }
 }
@@ -63,9 +64,25 @@ export default {
 <style scoped>
 .control-button {
   border: none;
-  background: url('../assets/button.png') no-repeat top left;
+  background: url('~@/assets/button.png') no-repeat top left;
   width: 58px;
   height: 58px;
   font-weight: bold;
+}
+
+.keyboard {
+  border: none;
+  cursor: none;
+  background: url('~@/assets/keyboard.png') no-repeat top center;
+  width: 58px;
+  height: 58px;
+  margin-left: 29px;
+}
+
+.keyboard:focus {
+    cursor: none;
+    color: transparent;
+  background: url('~@/assets/keyboard_focus.png') no-repeat top center;
+
 }
 </style>
