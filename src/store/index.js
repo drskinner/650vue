@@ -67,7 +67,7 @@ export default new Vuex.Store({
       cpu.sr &= (~flag & 0xff);
     },
     setLastKey({ ram }, key) {
-      if (key != 'Shift') {
+      if (key.length === 1) {
         ram[constants.registers.LAST_KEY] = (key.charCodeAt(0));
       }
     }

@@ -44,7 +44,6 @@ export const execute = {
         }
       }
 
-
       // something, something, interrupt, frame rate, something.
       this.refreshVideo();
 

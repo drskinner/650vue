@@ -80,9 +80,8 @@ export default {
 }
 
 .keyboard:focus {
-    cursor: none;
-    color: transparent;
+  cursor: none;
+  color: transparent;
   background: url('~@/assets/keyboard_focus.png') no-repeat top center;
-
 }
 </style>
