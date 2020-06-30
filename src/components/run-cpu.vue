@@ -1,6 +1,6 @@
 <template>
   <div>
-    Running: {{ this.isRunning }}
+    <img class="light" :src="require(`@/assets/run_light_${runLight}.png`)">
     <!-- TODO: Contextually disable buttons -->
     <button class="control-button" @click="run">RUN</button>
     <button class="control-button" @click="step">STEP</button>
@@ -26,7 +26,10 @@ export default {
   },
   computed: {
     ...mapState(['cpu', 'isRunning', 'ram']),
-    ...mapGetters(['flagStatus'])
+    ...mapGetters(['flagStatus']),
+    runLight() {
+      return this.isRunning ? 'on' : 'off';
+    }
   },
   watch: {
     isRunning: function (newValue, oldValue) {
@@ -83,5 +86,10 @@ export default {
   cursor: none;
   color: transparent;
   background: url('~@/assets/keyboard_focus.png') no-repeat top center;
+}
+
+.light {
+  width: 32px;
+  margin-right: 20px;
 }
 </style>
