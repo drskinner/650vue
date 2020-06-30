@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import constants from '@/const';
 
 Vue.use(Vuex)
 
@@ -64,6 +65,11 @@ export default new Vuex.Store({
     },
     clearFlag({ cpu }, flag) {
       cpu.sr &= (~flag & 0xff);
+    },
+    setLastKey({ ram }, key) {
+      if (key.length === 1) {
+        ram[constants.registers.LAST_KEY] = (key.charCodeAt(0));
+      }
     }
   },
   actions: {
@@ -74,6 +80,9 @@ export default new Vuex.Store({
     },
     refreshVideo({ commit }) {
       commit('updateVideoFrame');
+    },
+    processKey({ commit }, key) {
+      commit('setLastKey', key);
     }
   },
   getters: {

@@ -37,7 +37,14 @@ const routes = [
 const router = new VueRouter({
   mode: 'hash',
   base: process.env.BASE_URL,
-  routes
+  routes,
+  scrollBehavior: function (to) {
+    if (to.hash) {
+      return {
+        selector: to.hash
+      }
+    }
+  }
 })
 
 export default router

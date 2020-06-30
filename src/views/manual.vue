@@ -132,6 +132,27 @@
       </div>
     </section>
 
+    <section id="virtual-keyboard">
+      <div class="row">
+        <div class="column-left"></div>
+        <div class="column-right">
+          <h2>Virtual Keyboard</h2>
+        </div>
+      </div>
+      <div class="row">
+        <div class="column-left">
+          <img src="~@/assets/keyboard.png">
+        </div>
+        <div class="column-right">
+          <p>If a running program accepts keyboard input, the virtual keyboard will capture
+          what you type and relay it to the computer. The keyboard should automatically become
+          active whenever a program is running, although not all programs care about the keyboard.
+          If for some reason, the keyboard has stopped responding, click on the keyboard icon
+          (pictured at left) to restore control.</p>
+        </div>
+      </div>
+    </section>
+
     <section id="manual-video">
       <div class="row">
         <div class="column-left"></div>
@@ -198,7 +219,8 @@
           <p>At the moment, location <code>$000f</code> acts like a read-only random
           number generator, so an instruction like <code>LDA $0f</code> will fetch
           a random number between <code>$00</code> and <code>$ff</code> and store it
-          in the accumulator.</p>
+          in the accumulator. <code>$000d</code> holds the ASCII code of the last
+          keypress.</p>
         </div>
       </div>
     </section>

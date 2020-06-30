@@ -9,7 +9,11 @@ export default {
     SR_OVERFLOW:  0x40,
     SR_NEGATIVE:  0x80
   },
+  // I've borrowed the idea for zero-page pseduo-registers from
+  // Stian Søreng. http://www.6502asm.com/help.html
   registers: {
+    LAST_KEY: 0x0d,
+    JIFFY_CLOCK: 0x0e,
     RANDOM: 0x0f
   }
 }

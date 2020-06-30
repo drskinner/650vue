@@ -65,7 +65,7 @@ export default {
   line-height: 1;
   font-size: 100%;
   width: 480px;
-  padding: 3px 4px 0 4px;
+  padding: 3px 4px;
   background-color: black;
   color: lime;
 }

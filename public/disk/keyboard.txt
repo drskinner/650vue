@@ -1,0 +1,18 @@
+;
+; Very simple: read keyboard, type
+; on screen (first 256 bytes only)
+;
+
+> fffc 00 c0       ; reset vector
+
+. c000 LDX #$00
+. c002 STX $0d
+. c004 LDA $0d
+. c006 BEQ $c004
+. c008 STA $1000,x
+. c00b INX 
+. c00c LDA #$00
+. c00e STA $0d
+. c010 LDA #$5f
+. c012 STA $1000,x
+. c015 JMP $c004
