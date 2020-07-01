@@ -42,7 +42,13 @@ export default {
       for (let i = 0; i < 20; i += 1) {
         let line = '';
         for (let j = 0; j < 50; j += 1) {
-          line += this.asciiToChar(this.ram[0x1000 + (i * 50) + j]);
+          let byte = this.ram[0x1000 + (i * 50) + j];
+          let char = this.asciiToChar(byte & 0x7f);
+          if (byte & 0x80) {
+            line += `<span class="char" style="color: black; background-color: lime;">${char}</span>`;
+          } else {
+            line += `<span class="char">${char}</span>`;
+          }
         }
         lines.push(line);
       }
@@ -65,8 +71,12 @@ export default {
   line-height: 1;
   font-size: 100%;
   width: 480px;
-  padding: 3px 4px;
+  padding: 4px;
   background-color: black;
   color: lime;
+}
+
+span.char {
+  width: 2%;
 }
 </style>
