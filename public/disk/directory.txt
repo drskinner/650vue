@@ -1,4 +1,5 @@
 8209 conway - Conway's Game of Life
+9369 cursor - Cursor and keyboard demo
  192 dots   - Fill the screen with dots
  202 hello  - Classic "Hello, world!"
 1806 timer  - Interrupt-driven timer
