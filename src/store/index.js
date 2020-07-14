@@ -69,6 +69,18 @@ export default new Vuex.Store({
     setLastKey({ ram }, key) {
       if (key.length === 1) {
         ram[constants.registers.LAST_KEY] = (key.charCodeAt(0));
+      } else if (key === 'ArrowDown') {
+        ram[constants.registers.LAST_KEY] = constants.keys.ARROW_DOWN;
+      } else if (key === 'ArrowLeft') {
+        ram[constants.registers.LAST_KEY] = constants.keys.ARROW_LEFT;
+      } else if (key === 'ArrowRight') {
+        ram[constants.registers.LAST_KEY] = constants.keys.ARROW_RIGHT;
+      } else if (key === 'ArrowUp') {
+        ram[constants.registers.LAST_KEY] = constants.keys.ARROW_UP;
+      } else if (key === 'Backspace') {
+        ram[constants.registers.LAST_KEY] = constants.keys.BACKSPACE;
+      } else if (key === 'Enter') {
+        ram[constants.registers.LAST_KEY] = constants.keys.ENTER;
       }
     }
   },

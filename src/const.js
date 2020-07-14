@@ -9,6 +9,14 @@ export default {
     SR_OVERFLOW:  0x40,
     SR_NEGATIVE:  0x80
   },
+  keys: {
+    ARROW_DOWN:   0x1e,
+    ARROW_LEFT:   0x1f,
+    ARROW_RIGHT:  0x1d,
+    ARROW_UP:     0x1c,
+    BACKSPACE:    0x08,
+    ENTER:        0X0d
+  },
   // I've borrowed the idea for zero-page pseduo-registers from
   // Stian Søreng. http://www.6502asm.com/help.html
   registers: {

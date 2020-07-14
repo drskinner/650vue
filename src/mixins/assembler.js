@@ -58,6 +58,7 @@ export const assembler = {
       });
 
       if (!instruction) {
+        this.outputLine(this.command);
         this.error();
         return;
       }
