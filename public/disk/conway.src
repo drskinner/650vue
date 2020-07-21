@@ -1,0 +1,255 @@
+; John Conway's "Game of Life" cellular automaton.
+; 650Vue version by Dr. Myles Skinner.
+;
+; This 6502 version is inefficient but uses subroutines to make the
+; structure more clear. I could replace every JSR/RTS with inline
+; code to save a few cycles, but this program runs comfortably at
+; 600kHz without delay loops so I find the tradeoff acceptable.
+
+> fffc 00 c0       ; reset vector
+
+; ------------------------------------------------------------------------------
+; Title Screen
+; ------------------------------------------------------------------------------
+* = 1075
+        !chr `C O N W A Y ' S`
+* = 10dd
+        !chr `Game of`
+* = 115e
+        !chr `            OO                                    `
+        !chr `            OO       OO     OOO                   `
+        !chr `            OO             OO     OOOO            `
+        !chr `            OO      OOO   OOOOO  OO  OO           `
+        !chr `            OO       OO    OO    OOOOOO           `
+        !chr `            OO       OO    OO    OO               `
+        !chr `            OOOOOO  OOOO   OO     OOOO            `
+* = 132b
+        !chr `g c000 or press RUN to start`
+> 133b d2 d5 ce
+
+; ------------------------------------------------------------------------------
+; Screen RAM low bytes
+; ------------------------------------------------------------------------------
+> 00a0 00 32 64 96 c8 fa 2c 5e
+> 00a8 90 c2 f4 26 58 8a bc ee
+> 00b0 20 52 84 b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 00b4 10 10 10 10 10 10 11 11
+> 00bc 11 11 11 12 12 12 12 12
+> 00c4 13 13 13 13
+
+:zp_random     = $0f
+:screen_row_lo = $a0  ; screen RAM low address
+:screen_row_hi = $b4  ; screen RAM high address
+:neighbours    = $f9
+:xr_temp       = $fa
+:yr_temp       = $fb
+:plot_row      = $fc
+:plot_row_lo   = $fc  ; row for plotting cells
+:plot_row_hi   = $fd
+:scan_row      = $fe
+:scan_row_lo   = $fe  ; row to scan for neighbours
+:scan_row_hi   = $ff
+
+:empty_cell  = #$20
+:live_cell   = #$4f
+
+; some handy constants
+:DEC_19 = #$13
+:DEC_20 = #$14
+:DEC_49 = #$31
+:DEC_50 = #$32
+
+; ------------------------------------------------------------------------------
+; Populate screen RAM with random cells
+; ------------------------------------------------------------------------------
+* = c000
+              ldx #$fa        ; 250 bytes = 1/4 screen
+populateLoop  jsr randomCell  ; put random cell value in AC
+              sta $0fff,x
+              jsr randomCell
+              sta $10f9,x 
+              jsr randomCell
+              sta $11f3,x
+              jsr randomCell
+              sta $12ed,x
+              dex
+              bne populateLoop
+
+; ------------------------------------------------------------------------------
+; Main loop; check for neighbours for each (row,column) coordinate pair. The
+; register assignment feels backwards; normally (X,Y) would describe a Cartesian
+; coordinate but we want the Y-register for indirect, indexed lookups.
+; X-register: screen row (vertical position)
+; Y-register: screen column (horizontal position)
+; ------------------------------------------------------------------------------
+mainLoop      ldx :DEC_19         ; 20 rows (0-19)
+newRow        ldy :DEC_49         ; 50 columns (0-49)
+doCount       jsr countNeighbours
+              dey
+              bpl doCount
+              dex
+              bpl newRow
+              jsr updateScreen
+              jmp mainLoop        ; endless loop
+
+; ------------------------------------------------------------------------------
+; Randomly select a single cell's status
+; ------------------------------------------------------------------------------
+randomCell    lda :zp_random   ; random number
+              cmp #$40         ; probability of live cell
+              bcs emptyCell
+              lda :live_cell
+              rts
+emptyCell     lda :empty_cell
+              rts
+
+; ------------------------------------------------------------------------------
+; Count neighbours for one cell.
+; Needs X and Y from main loop.
+; ------------------------------------------------------------------------------
+countNeighbours   lda #$00
+                  sta :neighbours     ; start with 0 neighbours
+                  jsr countHorizontal
+                  jsr countRowAbove
+                  jsr countRowBelow
+                  jsr writeCount
+                  rts
+
+; ------------------------------------------------------------------------------
+; Count horizontal neighbours (left and right). Wraps around edges of screen.
+; XR, YR (row, col) should be set by the calling loop.
+; ------------------------------------------------------------------------------
+countHorizontal sty :yr_temp          ; save YR
+                lda :screen_row_lo,x  ; set up pointer to scan row
+                sta :scan_row_lo
+                lda :screen_row_hi,x
+                sta :scan_row_hi
+                dey                   ; move left
+                bpl lookLeft          ; negative == left overflow
+                ldy :DEC_49           ; rightmost column
+lookLeft        lda (:scan_row_lo),y  ; look at cell to the left
+                cmp :empty_cell
+                beq reloadYR1
+                inc :neighbours
+reloadYR1       ldy :yr_temp
+                iny                   ; move right
+                cpy :DEC_50           ; right overflow?
+                bne lookRight
+                ldy #$00              ; leftmost column
+lookRight       lda (:scan_row_lo),y  ; cell to the right
+                cmp :empty_cell
+                beq reloadYR2
+                inc :neighbours
+reloadYR2       ldy :yr_temp
+                rts
+
+; ------------------------------------------------------------------------------
+; Count row above cell. Sets the pointers for the row above the cell's position
+; and passes control to countRow.
+; ------------------------------------------------------------------------------
+countRowAbove   stx :xr_temp
+                dex                   ; one row above
+                bpl validRowAbove     ; #$ff is above top row
+                ldx :DEC_19           ; set to bottom row
+validRowAbove   lda :screen_row_lo,x  ; set up pointer to scan row
+                sta :scan_row_lo
+                lda :screen_row_hi,x
+                sta :scan_row_hi
+                jmp countRow          ; countRow will handle the RTS
+
+; ------------------------------------------------------------------------------
+; Count row below cell. Sets the pointers for the row above the cell's position
+; and continues on to countRow.
+; ------------------------------------------------------------------------------
+;
+; BUG in counting bottom row?
+;
+countRowBelow   stx :xr_temp
+                inx                   ; one row below
+                cpx :DEC_20           ; row 20 is past the bottom
+                bne validRowBelow
+                ldx #$00              ; set to top row
+validRowBelow   lda :screen_row_lo,x  ; set up pointer to scan row
+                sta :scan_row_lo
+                lda :screen_row_hi,x
+                sta :scan_row_hi
+
+; ------------------------------------------------------------------------------
+; Count three neighbours in the row pointed to by :scan_row. We JMP in here,
+; so this subroutine must restore XR, YR and handle the RTS.
+; ------------------------------------------------------------------------------
+countRow          sty :yr_temp
+                  lda (:scan_row_lo),y  ; direct vertical adjacency
+                  cmp :empty_cell
+                  beq setDiagonalLeft   ; empty: skip ahead
+                  inc :neighbours
+setDiagonalLeft   dey                   ; go to the left
+                  bpl checkLeft         ; negative is left underflow
+                  ldy :DEC_49           ; rightmost column
+checkLeft         lda (:scan_row_lo),y  ; get diagonal left
+                  cmp :empty_cell
+                  beq setDiagonalRight
+                  inc :neighbours
+setDiagonalRight  ldy :yr_temp
+                  iny                   ; go to the right
+                  cpy :DEC_50           ; right overflow
+                  bne checkRight
+                  ldy #$00              ; leftmost column
+checkRight        lda (:scan_row_lo),y  ; get diagonal right
+                  cmp :empty_cell
+                  beq exitCountRow
+                  inc :neighbours
+exitCountRow      ldx :xr_temp          ; restore registers before RTS
+                  ldy :yr_temp
+                  rts
+
+; ------------------------------------------------------------------------------
+; Store neighbour count in scratch area
+; ------------------------------------------------------------------------------
+writeCount  lda :screen_row_lo,x  ; set up pointer to plot row
+            sta :plot_row_lo
+            lda :screen_row_hi,x
+            eor #$30              ; switch to scratch area
+            sta :plot_row_hi
+            lda :neighbours
+            sta (:plot_row_lo),y  ; store in scratch
+            rts
+
+; ------------------------------------------------------------------------------
+; Update screen. Now that we have neighbours calculated and stored in the
+; scratch area of RAM ($2000), apply the rules and redraw screen RAM directly.
+; The Conway rules reduce to 3 conditions:
+;   * 2 neighbours: leave unchanged,
+;   * 3 neighbours: always populate, and
+;   * everything else dies. Nature is brutal.
+; ------------------------------------------------------------------------------
+updateScreen  ldx :DEC_19           ; 20 rows (0-19)
+nextRow       ldy :DEC_49           ; 50 columns (0-49)
+updateCell    lda :screen_row_lo,x  ; set pointers to screen and scratch RAM
+              sta :plot_row_lo
+              sta :scan_row_lo
+              lda :screen_row_hi,x
+              sta :plot_row_hi
+              clc
+              adc #$10              ; switch to scratch
+              sta :scan_row_hi
+              lda (:scan_row),y
+              cmp #$03              ; 3 neighbours? draw live cell
+              bne testStasis        ; otherwise, check for "no change"
+              lda :live_cell
+              jmp drawOneCell
+testStasis    cmp #$02              ; 2 neighbours? draw cell unchanged
+              bne setEmptyCell      ; otherwise, cell must be empty
+              lda (:plot_row),y
+              jmp drawOneCell
+setEmptyCell  lda :empty_cell       
+drawOneCell   sta (:plot_row),y
+              dey
+              bpl updateCell
+              dex
+              bpl nextRow
+              rts

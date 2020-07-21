@@ -1,0 +1,16 @@
+;
+; "Hello, world!"
+;
+> fffc 00 c0 ; RESET vector
+
+
+. c000 ldx #$00
+. c002 lda $c00f,x
+. c005 beq $c00e
+. c007 sta $1000,x
+. c00a inx
+. c00b jmp $c002
+. c00e brk
+
+> c00f 48 65 6C 6C 6F 2C 20 77
+> c017 6F 72 6C 64 21 00

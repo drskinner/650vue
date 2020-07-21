@@ -1,0 +1,278 @@
+; John Conway's "Game of Life" cellular automaton.
+; 650Vue version by Dr. Myles Skinner.
+;
+; This 6502 version is inefficient but uses subroutines to make the
+; structure more clear. I could replace every JSR/RTS with inline
+; code to save a few cycles, but this program runs comfortably at
+; 600kHz without delay loops so I find the tradeoff acceptable.
+
+> fffc 00 c0       ; reset vector
+
+; ------------------------------------------------------------------------------
+; Title Screen
+; ------------------------------------------------------------------------------
+> 1075 43 20 4F 20 4E 20 57 20
+> 107d 41 20 59 20 27 20 53
+> 10dd 47 61 6D 65 20 6F 66
+> 115e 20 20 20 20 20 20 20 20
+> 1166 20 20 20 20 4F 4F 20 20
+> 116e 20 20 20 20 20 20 20 20
+> 1176 20 20 20 20 20 20 20 20
+> 117e 20 20 20 20 20 20 20 20
+> 1186 20 20 20 20 20 20 20 20
+> 118e 20 20
+> 1190 20 20 20 20 20 20 20 20
+> 1198 20 20 20 20 4F 4F 20 20
+> 11a0 20 20 20 20 20 4F 4F 20
+> 11a8 20 20 20 20 4F 4F 4F 20
+> 11b0 20 20 20 20 20 20 20 20
+> 11b8 20 20 20 20 20 20 20 20
+> 11c0 20 20
+> 11c2 20 20 20 20 20 20 20 20
+> 11ca 20 20 20 20 4F 4F 20 20
+> 11d2 20 20 20 20 20 20 20 20
+> 11da 20 20 20 4F 4F 20 20 20
+> 11e2 20 20 4F 4F 4F 4F 20 20
+> 11ea 20 20 20 20 20 20 20 20
+> 11f2 20 20
+> 11f4 20 20 20 20 20 20 20 20
+> 11fc 20 20 20 20 4F 4F 20 20
+> 1204 20 20 20 20 4F 4F 4F 20
+> 120c 20 20 4F 4F 4F 4F 4F 20
+> 1214 20 4F 4F 20 20 4F 4F 20
+> 121c 20 20 20 20 20 20 20 20
+> 1224 20 20
+> 1226 20 20 20 20 20 20 20 20
+> 122e 20 20 20 20 4F 4F 20 20
+> 1236 20 20 20 20 20 4F 4F 20
+> 123e 20 20 20 4F 4F 20 20 20
+> 1246 20 4F 4F 4F 4F 4F 4F 20
+> 124e 20 20 20 20 20 20 20 20
+> 1256 20 20
+> 1258 20 20 20 20 20 20 20 20
+> 1260 20 20 20 20 4F 4F 20 20
+> 1268 20 20 20 20 20 4F 4F 20
+> 1270 20 20 20 4F 4F 20 20 20
+> 1278 20 4F 4F 20 20 20 20 20
+> 1280 20 20 20 20 20 20 20 20
+> 1288 20 20
+> 128a 20 20 20 20 20 20 20 20
+> 1292 20 20 20 20 4F 4F 4F 4F
+> 129a 4F 4F 20 20 4F 4F 4F 4F
+> 12a2 20 20 20 4F 4F 20 20 20
+> 12aa 20 20 4F 4F 4F 4F 20 20
+> 12b2 20 20 20 20 20 20 20 20
+> 12ba 20 20
+> 132b 67 20 63 30 30 30 20 6F
+> 1333 72 20 70 72 65 73 73 20
+> 133b 52 55 4E 20 74 6F 20 73
+> 1343 74 61 72 74
+> 133b d2 d5 ce
+
+; ------------------------------------------------------------------------------
+; Screen RAM low bytes
+; ------------------------------------------------------------------------------
+> 00a0 00 32 64 96 c8 fa 2c 5e
+> 00a8 90 c2 f4 26 58 8a bc ee
+> 00b0 20 52 84 b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 00b4 10 10 10 10 10 10 11 11
+> 00bc 11 11 11 12 12 12 12 12
+> 00c4 13 13 13 13
+
+
+
+; some handy constants
+
+; ------------------------------------------------------------------------------
+; Populate screen RAM with random cells
+; ------------------------------------------------------------------------------
+. c000 ldx #$fa
+. c002 jsr $c030
+. c005 sta $0fff,x
+. c008 jsr $c030
+. c00b sta $10f9,x
+. c00e jsr $c030
+. c011 sta $11f3,x
+. c014 jsr $c030
+. c017 sta $12ed,x
+. c01a dex
+. c01b bne $c002
+
+; ------------------------------------------------------------------------------
+; Main loop; check for neighbours for each (row,column) coordinate pair. The
+; register assignment feels backwards; normally (X,Y) would describe a Cartesian
+; coordinate but we want the Y-register for indirect, indexed lookups.
+; X-register: screen row (vertical position)
+; Y-register: screen column (horizontal position)
+; ------------------------------------------------------------------------------
+. c01d ldx #$13
+. c01f ldy #$31
+. c021 jsr $c03c
+. c024 dey
+. c025 bpl $c021
+. c027 dex
+. c028 bpl $c01f
+. c02a jsr $c0d7
+. c02d jmp $c01d
+
+; ------------------------------------------------------------------------------
+; Randomly select a single cell's status
+; ------------------------------------------------------------------------------
+. c030 lda $0f
+. c032 cmp #$40
+. c034 bcs $c039
+. c036 lda #$4f
+. c038 rts
+. c039 lda #$20
+. c03b rts
+
+; ------------------------------------------------------------------------------
+; Count neighbours for one cell.
+; Needs X and Y from main loop.
+; ------------------------------------------------------------------------------
+. c03c lda #$00
+. c03e sta $f9
+. c040 jsr $c04d
+. c043 jsr $c078
+. c046 jsr $c08a
+. c049 jsr $c0c8
+. c04c rts
+
+; ------------------------------------------------------------------------------
+; Count horizontal neighbours (left and right). Wraps around edges of screen.
+; XR, YR (row, col) should be set by the calling loop.
+; ------------------------------------------------------------------------------
+. c04d sty $fb
+. c04f lda $a0,x
+. c051 sta $fe
+. c053 lda $b4,x
+. c055 sta $ff
+. c057 dey
+. c058 bpl $c05c
+. c05a ldy #$31
+. c05c lda ($fe),y
+. c05e cmp #$20
+. c060 beq $c064
+. c062 inc $f9
+. c064 ldy $fb
+. c066 iny
+. c067 cpy #$32
+. c069 bne $c06d
+. c06b ldy #$00
+. c06d lda ($fe),y
+. c06f cmp #$20
+. c071 beq $c075
+. c073 inc $f9
+. c075 ldy $fb
+. c077 rts
+
+; ------------------------------------------------------------------------------
+; Count row above cell. Sets the pointers for the row above the cell's position
+; and passes control to $c09b.
+; ------------------------------------------------------------------------------
+. c078 stx $fa
+. c07a dex
+. c07b bpl $c07f
+. c07d ldx #$13
+. c07f lda $a0,x
+. c081 sta $fe
+. c083 lda $b4,x
+. c085 sta $ff
+. c087 jmp $c09b
+
+; ------------------------------------------------------------------------------
+; Count row below cell. Sets the pointers for the row above the cell's position
+; and continues on to $c09b.
+; ------------------------------------------------------------------------------
+;
+; BUG in counting bottom row?
+;
+. c08a stx $fa
+. c08c inx
+. c08d cpx #$14
+. c08f bne $c093
+. c091 ldx #$00
+. c093 lda $a0,x
+. c095 sta $fe
+. c097 lda $b4,x
+. c099 sta $ff
+
+; ------------------------------------------------------------------------------
+; Count three neighbours in the row pointed to by :scan_row. We JMP in here,
+; so this subroutine must restore XR, YR and handle the RTS.
+; ------------------------------------------------------------------------------
+. c09b sty $fb
+. c09d lda ($fe),y
+. c09f cmp #$20
+. c0a1 beq $c0a5
+. c0a3 inc $f9
+. c0a5 dey
+. c0a6 bpl $c0aa
+. c0a8 ldy #$31
+. c0aa lda ($fe),y
+. c0ac cmp #$20
+. c0ae beq $c0b2
+. c0b0 inc $f9
+. c0b2 ldy $fb
+. c0b4 iny
+. c0b5 cpy #$32
+. c0b7 bne $c0bb
+. c0b9 ldy #$00
+. c0bb lda ($fe),y
+. c0bd cmp #$20
+. c0bf beq $c0c3
+. c0c1 inc $f9
+. c0c3 ldx $fa
+. c0c5 ldy $fb
+. c0c7 rts
+
+; ------------------------------------------------------------------------------
+; Store neighbour count in scratch area
+; ------------------------------------------------------------------------------
+. c0c8 lda $a0,x
+. c0ca sta $fc
+. c0cc lda $b4,x
+. c0ce eor #$30
+. c0d0 sta $fd
+. c0d2 lda $f9
+. c0d4 sta ($fc),y
+. c0d6 rts
+
+; ------------------------------------------------------------------------------
+; Update screen. Now that we have neighbours calculated and stored in the
+; scratch area of RAM ($2000), apply the rules and redraw screen RAM directly.
+; The Conway rules reduce to 3 conditions:
+;   * 2 neighbours: leave unchanged,
+;   * 3 neighbours: always populate, and
+;   * everything else dies. Nature is brutal.
+; ------------------------------------------------------------------------------
+. c0d7 ldx #$13
+. c0d9 ldy #$31
+. c0db lda $a0,x
+. c0dd sta $fc
+. c0df sta $fe
+. c0e1 lda $b4,x
+. c0e3 sta $fd
+. c0e5 clc
+. c0e6 adc #$10
+. c0e8 sta $ff
+. c0ea lda ($fe),y
+. c0ec cmp #$03
+. c0ee bne $c0f5
+. c0f0 lda #$4f
+. c0f2 jmp $c100
+. c0f5 cmp #$02
+. c0f7 bne $c0fe
+. c0f9 lda ($fc),y
+. c0fb jmp $c100
+. c0fe lda #$20
+. c100 sta ($fc),y
+. c102 dey
+. c103 bpl $c0db
+. c105 dex
+. c106 bpl $c0d9
+. c108 rts

@@ -1,0 +1,15 @@
+;
+; Screenful o' dots...
+;
+> fffc 00 c0 ; RESET vector
+
+
+. c000 lda #$2e
+. c002 ldx #$fa
+. c004 sta $0fff,x
+. c007 sta $10f9,x
+. c00a sta $11f3,x
+. c00d sta $12ed,x
+. c010 dex
+. c011 bne $c004
+. c013 brk

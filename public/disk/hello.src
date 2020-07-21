@@ -1,0 +1,17 @@
+;
+; "Hello, world!"
+;
+> fffc 00 c0 ; RESET vector
+
+:screen = $1000
+* = $c000
+
+        ldx #$00
+loop    lda string,x
+        beq exit
+        sta :screen,x
+        inx 
+        jmp loop
+exit    brk
+
+string  !str `Hello, world!`
