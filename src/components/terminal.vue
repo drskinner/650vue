@@ -19,7 +19,6 @@ export default {
       command: '',
       memoryPager: 0x0000,
       monitor: Array(20).fill(''),
-      labels: []
     }
   },
   computed: {
@@ -191,34 +190,16 @@ export default {
       }
     },
     parseFileInputLine(line) {
-      let parts = [];
-      let key = '';
-
       switch(line[0]) {
         case '>':
           this.command = line;
           this.writeMemory();
           break;
         case '.':
-          if (line.includes('*')) {
-            for (key in this.labels) {
-              line = line.replace(key, this.labels[key]);
-            }
-          }
           this.command = line;
           this.assemble();
           break;
         case ';':
-          break;
-        case '*':
-          parts = line.split(' ');
-
-          if (parts.length < 3) {
-            this.outputLine(`<span style="color:orange;">Bad Label:</span> ${line}`);
-            return;
-          }
-
-          this.labels[parts[0]] = parts[2];
           break;
         default:
           this.outputLine(line);
@@ -228,8 +209,7 @@ export default {
     async load() {
       try {
         let parts = this.command.split(' ');
-        const response = await axios.get(`disk/${parts[1]}.txt`);
-        this.labels = [];
+        const response = await axios.get(`disk/${parts[1]}.obj`);
 
         response.data.split("\n").forEach(line => {
           if (line.length === 0) {
@@ -240,7 +220,6 @@ export default {
       } catch(ex) {
         let error = 'File not found.';
         this.outputLine(`<span style="color:orange;">Error:</span> ${error}`);
-        this.outputLine(ex);
       } finally {
         this.command = '';
         this.resetCpu();

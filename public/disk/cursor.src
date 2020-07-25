@@ -1,0 +1,340 @@
+;
+; Simple flashing cursor with arrow keys, enter, and delete.
+; Keyboard scan lets you type on the video display.
+;
+; Inspired by the Commodore kernal's full-screen editor.
+
+> fffc 00 c0          ; reset vector
+
+:zp_last_key   = $0e  ; last key press
+:screen_row_lo = $a0  ; screen RAM low address table
+:screen_row_hi = $b4  ; screen RAM high address table
+
+:cursor_row    = $ca  ; cursor y position
+:cursor_col    = $cb  ; cursor x position
+:blink_enabled = $cc  ; cursor blink enabled
+:blink_counter = $cd  ; countdown timer
+:cursor_char   = $ce  ; character under cursor
+:blink_state   = $cf  ; cursor blink state
+
+> 00ca 00 00          ; cursor at "home" position
+> 00cc 01             ; blink on
+> 00cd 14             ; cursor timer
+
+:plot_row    = $f0
+:plot_row_lo = $f0
+:plot_row_hi = $f1
+:read_row    = $f2
+:read_row_lo = $f2
+:read_row_hi = $f3
+
+; set ASCII character values for control characters
+:arrow_down  = #$1e
+:arrow_left  = #$1f
+:arrow_right = #$1d
+:arrow_up    = #$1c
+:ascii_null  = #$00
+:delete      = #$08
+:enter       = #$0d
+:space       = #$20
+
+:last_row_base = $13b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM low bytes
+; ------------------------------------------------------------------------------
+> 00a0 00 32 64 96 c8 fa 2c 5e
+> 00a8 90 c2 f4 26 58 8a bc ee
+> 00b0 20 52 84 b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 00b4 10 10 10 10 10 10 11 11
+> 00bc 11 11 11 12 12 12 12 12
+> 00c4 13 13 13 13
+
+; ------------------------------------------------------------------------------
+; set IRQ vector to $e000
+; ------------------------------------------------------------------------------
+* = $c000
+initialize  sei
+            lda #$00
+            sta $fffe ; vector low byte
+            lda #$e0
+            sta $ffff ; vector high byte
+            cli
+
+; ------------------------------------------------------------------------------
+; main loop: read key, process, repeat
+; ------------------------------------------------------------------------------
+mainLoop      lda :zp_last_key     ; read key
+              beq mainLoop         ; zero? no key pressed
+              and #$60             ; 0110 0000 mask; destroys AC
+              bne printableChar    ; printable?
+              jmp nonPrintableChar ; jump if not printable
+; ------------------------------------------------------------------------------
+; handle printable ASCII character
+; ------------------------------------------------------------------------------
+printableChar lda #$00
+              sta :blink_enabled   ; disable cursor blink
+              lda :zp_last_key     ; place new character at cursor
+              jsr plotCharAtCursor ; plot char (AC) at cursor
+              jsr moveCursorRight  ; cursor right
+
+; ------------------------------------------------------------------------------
+; entry point for end of main loop
+; ------------------------------------------------------------------------------
+endMainLoop   jsr setCharUnderCursor  ; update character under cursor
+              lda :cursor_char        ; get char at new cursor position
+              ldx :blink_state        ; get blink state
+              beq plotChar            ; blink == 0, skip toggle
+              eor #$80                ; toggle inverse video at cursor
+plotChar      jsr plotCharAtCursor    ; plot char (AC) at new cursor 
+              lda #$00                ; clear last key register
+              sta :zp_last_key
+              lda #$01                ; enable cursor blink
+              sta :blink_enabled
+              jmp mainLoop            ; loop back
+
+; ------------------------------------------------------------------------------
+; Handle non-printable characters.
+; this seems really inefficient...and not DRY but the following really just
+; spells out a long switch..case block. :)
+; ------------------------------------------------------------------------------
+nonPrintableChar  lda #$00
+                  sta :blink_enabled    ; disable cursor blink
+                  lda :cursor_char      ; reprint char under old cursor
+                  jsr plotCharAtCursor
+                  lda :zp_last_key      ; get last key
+;
+; ARROW_UP
+;
+testArrowUp       cmp :arrow_up
+                  bne testArrowRight    ; check another match
+                  jsr moveCursorUp      ; cursor up subroutine
+                  jmp endMainLoop       ; we're done here
+;
+; ARROW_RIGHT
+;
+testArrowRight    cmp :arrow_right
+                  bne testArrowDown     ; check another match
+                  jsr moveCursorRight   ; cursor right subroutine
+                  jmp endMainLoop
+;
+; ARROW_DOWN
+;
+testArrowDown     cmp :arrow_down
+                  bne testArrowLeft     ; check another match
+                  jsr moveCursorDown    ; cursor down subroutine
+                  jmp endMainLoop       ; end of main loop
+;
+; ARROW_LEFT
+;
+testArrowLeft     cmp :arrow_left
+                  bne testEnter         ; check another match
+                  jsr moveCursorLeft    ; cursor left subroutine
+                  jmp endMainLoop       ; end of main loop
+;
+; ENTER
+;
+testEnter         cmp :enter
+                  bne testDelete        ; check another match
+                  jsr doCarriageReturn  ; carriage return subroutine
+                  jmp endMainLoop       ; end of main loop
+;
+; DELETE
+;
+testDelete        cmp :delete
+                  bne exitTest          ; check another match
+                  jsr doDelete          ; delete subroutine
+exitTest          jmp endMainLoop       ; end of main loop
+
+; ------------------------------------------------------------------------------
+; Plot one character at cursor position:
+; AC: ASCII value; XR, YR: row, column
+; (yes, reverse Cartesian for speed)
+; AC preserved.
+; ------------------------------------------------------------------------------
+* = $d000
+plotCharAtCursor    pha
+                    ldx :cursor_row
+                    ldy :cursor_col
+                    lda :screen_row_lo,x
+                    sta :plot_row_lo
+                    lda :screen_row_hi,x
+                    sta :plot_row_hi
+                    pla 
+                    sta (:plot_row),y
+                    rts
+
+; ------------------------------------------------------------------------------
+; Update character at cursor position;
+; store in :cursor_char
+; AC not preserved.
+; ------------------------------------------------------------------------------
+setCharUnderCursor  ldx :cursor_row
+                    ldy :cursor_col
+                    lda :screen_row_lo,x
+                    sta :plot_row_lo
+                    lda :screen_row_hi,x
+                    sta :plot_row_hi
+                    lda (:plot_row),y
+                    sta :cursor_char
+                    rts
+
+; ------------------------------------------------------------------------------
+; Move cursor up. This move is very simple: move the cursor up one row, but
+; not beyond the top edge.
+; ------------------------------------------------------------------------------
+moveCursorUp        dec :cursor_row
+                    bpl exitCursorUp    ; skip if in bounds
+                    inc :cursor_row     ; check for top row
+exitCursorUp        rts
+
+; ------------------------------------------------------------------------------
+; Move cursor right. If we go off the right edge, then we're on the next line.
+; Beacuse we have advanced one line, cursor right dovetails with cursor down. 
+; ------------------------------------------------------------------------------
+moveCursorRight     inc :cursor_col     ; advance cursor column (right)
+                    lda #$32            ; #$32 == past right edge
+                    cmp :cursor_col     ; did we pass right edge?
+                    bne exitCursorRight ; skip if in bounds
+                    lda #$00            ; reset cursor to left
+                    sta :cursor_col
+; ------------------------------------------------------------------------------
+; entry point for cursor down
+; ------------------------------------------------------------------------------
+moveCursorDown      inc :cursor_row     ; current cursor row
+                    lda #$14            ; #$14 == past bottom edge
+                    cmp :cursor_row     ; did we pass bottom?
+                    bne exitCursorRight ; skip if in bounds
+                    dec :cursor_row     ; bring cursor back to bottom row
+                    jsr scrollScreen
+exitCursorRight     rts
+
+; ------------------------------------------------------------------------------
+; Move cursor left. If we go off the left edge, then we're on the previous line.
+; Can't go any higher than the top line; in this situation, the cursor column
+; has rolled over to $ff, so we need to correct its position.
+; ------------------------------------------------------------------------------
+moveCursorLeft      dec :cursor_col
+                    bpl exitCursorLeft0 ; skip if in bounds
+                    lda :cursor_row     ; check for top row
+                    beq exitCursorLeft1 ; skip if top (== 0)
+                    lda #$31            ; set cursor to right
+                    sta :cursor_col
+                    dec :cursor_row
+exitCursorLeft0     rts
+exitCursorLeft1     inc :cursor_col     ; column is $ff, make $00
+                    rts
+
+; ------------------------------------------------------------------------------
+; Execute carriage return. It's as simple as moving the cursor to column 0,
+; and moving the cursor to the next line, which will trigger a scroll at the
+; bottom of the screen.
+; ------------------------------------------------------------------------------
+doCarriageReturn    lda #$00            ; set column to zero
+                    sta :cursor_col
+                    jsr moveCursorDown  ; call cursor down
+                    rts
+
+; ------------------------------------------------------------------------------
+; Execute delete/backspace. The cursor moves left, pulling everything up to the
+; end of the line along with it. A delete from column 0 will erase the last
+; character on the previous line.
+; ------------------------------------------------------------------------------
+doDelete            jsr moveCursorLeft    ; cursor left subroutine
+                    ldx :cursor_row       ; where is my cursor?
+                    ldy :cursor_col
+pullNextChar        iny                   ; go one past
+                    cpy #$32              ; off-screen?
+                    beq endDelete         ; yes? finish routine
+                    lda :screen_row_lo,x  ; find RAM address of position
+                    sta :read_row_lo
+                    lda :screen_row_hi,x
+                    sta :read_row_hi
+                    lda (:read_row),y ; read character at position
+                    dey
+                    sta (:read_row),y
+                    iny
+                    jmp pullNextChar
+endDelete           dey                   ; back to last column
+                    lda :space
+                    sta (:read_row),y
+                    ldy :cursor_col
+                    cpy #$31              ; last column?
+                    bne exitDelete
+                    jsr plotCharAtCursor  ; plot space under cursor
+exitDelete          sta :cursor_char
+                    rts
+
+; ------------------------------------------------------------------------------
+; Scroll screen up one line. Copies one row at a time and fills the last line
+; with blanks.
+; ------------------------------------------------------------------------------
+scrollScreen    ldx #$01              ; set XR to row 1
+startRowScroll  ldy #$31              ; set YR to col 49
+loopScrollChar  lda :screen_row_lo,x  ; find RAM address of position
+                sta :read_row_lo
+                lda :screen_row_hi,x
+                sta :read_row_hi
+                lda (:read_row),y ; read character at position
+                pha                   ; save character to stack
+                dex                   ; previous row
+                lda :screen_row_lo,x  ; find RAM address of new position
+                sta :plot_row_lo
+                lda :screen_row_hi,x
+                sta :plot_row_hi
+                pla                   ; get character back from stack
+                sta (:plot_row),y ; plot character
+                inx                   ; back to current row
+                dey                   ; left one column
+                bpl loopScrollChar    ; loop until negative
+                inx                   ; next row
+                txa
+                cmp #$14              ; is row past bottom?
+                bne startRowScroll    ; still rows, keep looping
+                ldy #$31              ; loop to clear last line
+                lda :space
+loopLastLine    sta :last_row_base,y
+                dey
+                bpl loopLastLine
+                rts
+
+; ------------------------------------------------------------------------------
+; interrupt routine - flash cursor
+; preserves AC, XR, and YR
+; ------------------------------------------------------------------------------
+* = $e000
+irqService  pha                   ; stash registers
+            txa
+            pha
+            tya
+            pha
+
+            lda :blink_enabled    ; 0 == blink off
+            beq exitIRQ           ; exit if blink off
+            dec :blink_counter    ; decrease countdown
+            bne exitIRQ           ; exit if not zero
+            lda #$14              ; reload countdown
+            sta :blink_counter
+            lda :blink_state      ; toggle blink state
+            eor #$01
+            sta :blink_state
+            ldx :cursor_row       ; get row base screen address
+            lda :screen_row_lo,x  ; into zero page :plot_row
+            sta :plot_row_lo
+            lda :screen_row_hi,x
+            sta :plot_row_hi
+            ldy :cursor_col
+            lda (:plot_row),y ; get cursor RAM address
+            eor #$80              ; toggle inverse video
+            sta (:plot_row),y ; write new char to screen
+
+exitIRQ     pla                   ; restore registers
+            tay
+            pla
+            tax
+            pla
+            rti

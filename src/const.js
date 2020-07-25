@@ -20,8 +20,11 @@ export default {
   // I've borrowed the idea for zero-page pseduo-registers from
   // Stian Søreng. http://www.6502asm.com/help.html
   registers: {
-    LAST_KEY: 0x0d,
-    JIFFY_CLOCK: 0x0e,
-    RANDOM: 0x0f
+    CLOCK_HOURS:   0x0a,
+    CLOCK_MINUTES: 0x0b,
+    CLOCK_SECONDS: 0x0c,
+    CLOCK_JIFFIES: 0x0d,
+    LAST_KEY:      0x0e,
+    RANDOM:        0x0f
   }
 }
