@@ -1,0 +1,147 @@
+;
+; Oscillating sine wave.
+; A simple 650Vue demo by Dr. Myles Skinner.
+;
+; The sine wave is pre-calculated. Nothing fancy here.
+; The program logic is also a bit tangled up but it works. :)
+
+> fffc 00 c0 ; RESET vector
+
+:screen_row_lo = $a0  ; screen RAM low address table
+:screen_row_hi = $b4  ; screen RAM high address table
+
+:row_10_base   = $11f4
+
+:plot_row      = $fe
+:plot_row_lo   = $fe
+:plot_row_hi   = $ff
+
+:pointer       = $fc
+:pointer_lo    = $fc
+:pointer_hi    = $fd
+> 00fc 40 00
+
+; some handy constants
+:DEC_19 = #$13
+:DEC_20 = #$14
+:DEC_23 = #$17
+:DEC_24 = #$18
+:DEC_48 = #$30
+:DEC_49 = #$31
+:DEC_52 = #$34
+
+:space = #$20
+:dash  = #$2d
+:star  = #$2a
+:pipe  = #$7c
+
+; ------------------------------------------------------------------------------
+; Screen RAM low bytes
+; ------------------------------------------------------------------------------
+> 00a0 00 32 64 96 c8 fa 2c 5e
+> 00a8 90 c2 f4 26 58 8a bc ee
+> 00b0 20 52 84 b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 00b4 10 10 10 10 10 10 11 11
+> 00bc 11 11 11 12 12 12 12 12
+> 00c4 13 13 13 13
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 0040 09 0b 0e 10 12 13 13 13
+> 0048 13 12 10 0e 0b 09 06 04
+> 0050 02 01 00 00 00 00 01 02
+> 0058 04 06
+> 005a 09 0b 0e 10 12 13 13 13
+> 0062 13 12 10 0e 0b 09 06 04
+> 006a 02 01 00 00 00 00 01 02
+> 0072 04 06
+> 0074 09 0b 0e 10 12 13 13 13
+> 007c 13 12 10 0e 0b 09 06 04
+> 0084 02 01 00 00 00 00 01 02
+> 008c 04 06 09
+
+; ------------------------------------------------------------------------------
+
+; ------------------------------------------------------------------------------
+* = $c000
+                lda :dash           ; draw X axis
+                ldy :DEC_49
+loopHorizontal  sta :row_10_base,y
+                dey
+                bpl loopHorizontal
+
+resetPointer    lda #$40            ; begin full cycle anew
+                sta :pointer    
+
+mainLoop        lda :pipe           ; draw Y axis
+                ldy :DEC_24
+                ldx :DEC_19
+loopVertical    jsr plotChar
+                dex
+                bpl loopVertical
+
+                lda :star           ; draw sine curve
+                ldy :DEC_49
+loopCurve       pha
+                lda (:pointer),y
+                tax
+                pla
+                jsr plotChar
+                dey
+                bpl loopCurve
+
+; remove the leftmost star
+                ldy #$00
+                lda (:pointer),y
+                tax
+                lda :space
+                jsr plotChar
+
+; advance pointer (roll over if needed)
+                inc :pointer
+                lda :pointer
+                cmp #$5b
+                beq resetPointer
+
+; from left to right, plot each star and then remove the one to the right
+moveStars       lda (:pointer),y
+                tax
+                lda :star
+                jsr plotChar
+                iny
+                cpy #$32
+                beq replacePipe
+                lda :space
+                dey
+                lda (:pointer),y
+                tax
+                iny
+                jsr plotChar
+                jmp moveStars
+
+; replace pipe that we erased when the star vacated
+replacePipe     ldy :DEC_23       ; one left of center
+                lda (:pointer),y
+                tax
+                lda :pipe
+                iny
+                jsr plotChar
+                jmp mainLoop
+
+; ------------------------------------------------------------------------------
+; Plot one character on screen:
+; AC: ASCII value; XR, YR: row, column
+; ------------------------------------------------------------------------------
+plotChar    pha
+            lda :screen_row_lo,x
+            sta :plot_row_lo
+            lda :screen_row_hi,x
+            sta :plot_row_hi
+            pla
+            sta (:plot_row),y
+            rts

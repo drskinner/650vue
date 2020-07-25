@@ -1,16 +1,14 @@
 ;
-; Simple flashing cursor with arrow keys,
-; enter, and delete. Keyboard scan lets
-; you type on the video display.
+; Simple flashing cursor with arrow keys, enter, and delete.
+; Keyboard scan lets you type on the video display.
 ;
-; Inspired by the Commodore kernal's
-; full-screen editor.
-;
+; Inspired by the Commodore kernal's full-screen editor.
+
 > fffc 00 c0          ; reset vector
 
-:zp_last_key   = $0d  ; last key press
-:screen_row_lo = $a0  ; screen RAM low address
-:screen_row_hi = $b4  ; screen RAM high address
+:zp_last_key   = $0e  ; last key press
+:screen_row_lo = $a0  ; screen RAM low address table
+:screen_row_hi = $b4  ; screen RAM high address table
 
 :cursor_row    = $ca  ; cursor y position
 :cursor_col    = $cb  ; cursor x position
@@ -23,10 +21,12 @@
 > 00cc 01             ; blink on
 > 00cd 14             ; cursor timer
 
-:plot_char_lo : $f0
-:plot_char_hi : $f1
-:read_char_lo : $f2
-:read_char_hi : $f3
+:plot_row    = $f0
+:plot_row_lo = $f0
+:plot_row_hi = $f1
+:read_row    = $f2
+:read_row_lo = $f2
+:read_row_hi = $f3
 
 ; set ASCII character values for control characters
 :arrow_down  = #$1e
@@ -161,11 +161,11 @@ plotCharAtCursor    pha
                     ldx :cursor_row
                     ldy :cursor_col
                     lda :screen_row_lo,x
-                    sta :plot_char_lo
+                    sta :plot_row_lo
                     lda :screen_row_hi,x
-                    sta :plot_char_hi
+                    sta :plot_row_hi
                     pla 
-                    sta (:plot_char_lo),y
+                    sta (:plot_row),y
                     rts
 
 ; ------------------------------------------------------------------------------
@@ -176,10 +176,10 @@ plotCharAtCursor    pha
 setCharUnderCursor  ldx :cursor_row
                     ldy :cursor_col
                     lda :screen_row_lo,x
-                    sta :plot_char_lo
+                    sta :plot_row_lo
                     lda :screen_row_hi,x
-                    sta :plot_char_hi
-                    lda (:plot_char_lo),y
+                    sta :plot_row_hi
+                    lda (:plot_row),y
                     sta :cursor_char
                     rts
 
@@ -251,17 +251,17 @@ pullNextChar        iny                   ; go one past
                     cpy #$32              ; off-screen?
                     beq endDelete         ; yes? finish routine
                     lda :screen_row_lo,x  ; find RAM address of position
-                    sta :read_char_lo
+                    sta :read_row_lo
                     lda :screen_row_hi,x
-                    sta :read_char_hi
-                    lda (:read_char_lo),y ; read character at position
+                    sta :read_row_hi
+                    lda (:read_row),y ; read character at position
                     dey
-                    sta (:read_char_lo),y
+                    sta (:read_row),y
                     iny
                     jmp pullNextChar
 endDelete           dey                   ; back to last column
                     lda :space
-                    sta (:read_char_lo),y
+                    sta (:read_row),y
                     ldy :cursor_col
                     cpy #$31              ; last column?
                     bne exitDelete
@@ -276,18 +276,18 @@ exitDelete          sta :cursor_char
 scrollScreen    ldx #$01              ; set XR to row 1
 startRowScroll  ldy #$31              ; set YR to col 49
 loopScrollChar  lda :screen_row_lo,x  ; find RAM address of position
-                sta :read_char_lo
+                sta :read_row_lo
                 lda :screen_row_hi,x
-                sta :read_char_hi
-                lda (:read_char_lo),y ; read character at position
+                sta :read_row_hi
+                lda (:read_row),y ; read character at position
                 pha                   ; save character to stack
                 dex                   ; previous row
                 lda :screen_row_lo,x  ; find RAM address of new position
-                sta :plot_char_lo
+                sta :plot_row_lo
                 lda :screen_row_hi,x
-                sta :plot_char_hi
+                sta :plot_row_hi
                 pla                   ; get character back from stack
-                sta (:plot_char_lo),y ; plot character
+                sta (:plot_row),y ; plot character
                 inx                   ; back to current row
                 dey                   ; left one column
                 bpl loopScrollChar    ; loop until negative
@@ -323,14 +323,14 @@ irqService  pha                   ; stash registers
             eor #$01
             sta :blink_state
             ldx :cursor_row       ; get row base screen address
-            lda :screen_row_lo,x  ; into zero page :plot_char
-            sta :plot_char_lo
+            lda :screen_row_lo,x  ; into zero page :plot_row
+            sta :plot_row_lo
             lda :screen_row_hi,x
-            sta :plot_char_hi
+            sta :plot_row_hi
             ldy :cursor_col
-            lda (:plot_char_lo),y ; get cursor RAM address
+            lda (:plot_row),y ; get cursor RAM address
             eor #$80              ; toggle inverse video
-            sta (:plot_char_lo),y ; write new char to screen
+            sta (:plot_row),y ; write new char to screen
 
 exitIRQ     pla                   ; restore registers
             tay

@@ -1,11 +1,9 @@
 ;
-; Simple flashing cursor with arrow keys,
-; enter, and delete. Keyboard scan lets
-; you type on the video display.
+; Simple flashing cursor with arrow keys, enter, and delete.
+; Keyboard scan lets you type on the video display.
 ;
-; Inspired by the Commodore kernal's
-; full-screen editor.
-;
+; Inspired by the Commodore kernal's full-screen editor.
+
 > fffc 00 c0          ; reset vector
 
 
@@ -45,7 +43,7 @@
 ; ------------------------------------------------------------------------------
 ; main loop: read key, process, repeat
 ; ------------------------------------------------------------------------------
-. c00c lda $0d
+. c00c lda $0e
 . c00e beq $c00c
 . c010 and #$60
 . c012 bne $c017
@@ -55,7 +53,7 @@
 ; ------------------------------------------------------------------------------
 . c017 lda #$00
 . c019 sta $cc
-. c01b lda $0d
+. c01b lda $0e
 . c01d jsr $d000
 . c020 jsr $d029
 
@@ -69,7 +67,7 @@
 . c02c eor #$80
 . c02e jsr $d000
 . c031 lda #$00
-. c033 sta $0d
+. c033 sta $0e
 . c035 lda #$01
 . c037 sta $cc
 . c039 jmp $c00c
@@ -83,7 +81,7 @@
 . c03e sta $cc
 . c040 lda $ce
 . c042 jsr $d000
-. c045 lda $0d
+. c045 lda $0e
 ;
 ; ARROW_UP
 ;

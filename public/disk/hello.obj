@@ -1,6 +1,7 @@
 ;
 ; "Hello, world!"
-;
+; A simple 650Vue demo by Dr. Myles Skinner.
+
 > fffc 00 c0 ; RESET vector
 
 

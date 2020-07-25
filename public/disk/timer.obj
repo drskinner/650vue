@@ -1,12 +1,13 @@
 ;
-; Interrupt-driven timer...
+; Interrupt-driven timer program.
+; A simple 650Vue IRQ demo by Dr. Myles Skinner.
 ;
 ; timer routine starts at $c000
 ; interrupt service routine at $d000
 ; timer $b000 at $b000
 
 ; Timer runs on the IRQ synced to the
-; browser refresh rate (60Hz).
+; browser refresh rate (usually 60Hz).
 
 > fffc 00 c0 ; RESET vector
 

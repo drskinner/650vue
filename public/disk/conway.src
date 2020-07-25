@@ -11,11 +11,11 @@
 ; ------------------------------------------------------------------------------
 ; Title Screen
 ; ------------------------------------------------------------------------------
-* = 1075
+* = $1075
         !chr `C O N W A Y ' S`
-* = 10dd
+* = $10dd
         !chr `Game of`
-* = 115e
+* = $115e
         !chr `            OO                                    `
         !chr `            OO       OO     OOO                   `
         !chr `            OO             OO     OOOO            `
@@ -23,7 +23,7 @@
         !chr `            OO       OO    OO    OOOOOO           `
         !chr `            OO       OO    OO    OO               `
         !chr `            OOOOOO  OOOO   OO     OOOO            `
-* = 132b
+* = $132b
         !chr `g c000 or press RUN to start`
 > 133b d2 d5 ce
 
@@ -66,7 +66,7 @@
 ; ------------------------------------------------------------------------------
 ; Populate screen RAM with random cells
 ; ------------------------------------------------------------------------------
-* = c000
+* = $c000
               ldx #$fa        ; 250 bytes = 1/4 screen
 populateLoop  jsr randomCell  ; put random cell value in AC
               sta $0fff,x
