@@ -1,0 +1,100 @@
+;
+; Interrupt-driven timer program.
+; A simple 650Vue IRQ demo by Dr. Myles Skinner.
+;
+; timer routine starts at $c000
+; interrupt service routine at $d000
+; timer $b000 at $b000
+
+; Timer runs on the IRQ synced to the
+; browser refresh rate (usually 60Hz).
+
+> fffc 00 c0 ; RESET vector
+
+; initialize clock registers
+; values are ASCII minus $30
+; $ff: interrupt cycle counter
+; $fe: tenths of a second
+; $fd: dot
+; $fb, $fc: seconds
+; $fa: colon
+; $f8, $f9: minutes
+> 00f8 00 00 0a 00 00 fe 00 06
+
+
+
+; --------------------------------------
+; $b000 timer - g $b000 to $b000
+; --------------------------------------
+. b000 lda #$00
+. b002 sta $fe
+. b004 sta $fc
+. b006 sta $fb
+. b008 sta $f9
+. b00a sta $f8
+. b00c lda #$30
+. b00e sta $11d7
+. b011 sta $11d8
+. b014 sta $11da
+. b017 sta $11db
+. b01a sta $11dd
+. b01d brk
+
+; --------------------------------------
+; set IRQ vector
+; --------------------------------------
+. c000 sei
+. c001 lda #$00
+. c003 sta $fffe
+. c006 lda #$d0
+. c008 sta $ffff
+. c00b cli
+; --------------------------------------
+; $c00c clock ad infinitum
+; --------------------------------------
+. c00c ldx #$06
+. c00e lda $f8,x
+. c010 clc
+. c011 adc #$30
+. c013 sta $11d7,x
+. c016 dex
+. c017 bpl $c00e
+. c019 jmp $c00c
+
+; --------------------------------------
+; interrupt service routine
+; preserves AC, XR; destroys YR
+; --------------------------------------
+. d000 pha
+. d001 ldy #$00
+. d003 dec $ff
+. d005 bne $d03d
+. d007 lda #$06
+. d009 sta $ff
+. d00b inc $fe
+. d00d lda $fe
+. d00f cmp #$0a
+. d011 bne $d03d
+. d013 sty $fe
+. d015 inc $fc
+. d017 lda $fc
+. d019 cmp #$0a
+. d01b bne $d03d
+. d01d sty $fc
+. d01f inc $fb
+. d021 lda $fb
+. d023 cmp #$06
+. d025 bne $d03d
+. d027 sty $fb
+. d029 inc $f9
+. d02b lda $f9
+. d02d cmp #$0a
+. d02f bne $d03d
+. d031 sty $f9
+. d033 inc $f8
+. d035 lda $f8
+. d037 cmp #$06
+. d039 bne $d03d
+. d03b sty $f8
+. d03d pla
+. d03e rti

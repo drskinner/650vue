@@ -1,0 +1,313 @@
+;
+; Simple flashing cursor with arrow keys, enter, and delete.
+; Keyboard scan lets you type on the video display.
+;
+; Inspired by the Commodore kernal's full-screen editor.
+
+> fffc 00 c0          ; reset vector
+
+
+
+> 00ca 00 00          ; cursor at "home" position
+> 00cc 01             ; blink on
+> 00cd 14             ; cursor timer
+
+
+; set ASCII character values for control characters
+
+
+; ------------------------------------------------------------------------------
+; Screen RAM low bytes
+; ------------------------------------------------------------------------------
+> 00a0 00 32 64 96 c8 fa 2c 5e
+> 00a8 90 c2 f4 26 58 8a bc ee
+> 00b0 20 52 84 b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 00b4 10 10 10 10 10 10 11 11
+> 00bc 11 11 11 12 12 12 12 12
+> 00c4 13 13 13 13
+
+; ------------------------------------------------------------------------------
+; set IRQ vector to $e000
+; ------------------------------------------------------------------------------
+. c000 sei
+. c001 lda #$00
+. c003 sta $fffe
+. c006 lda #$e0
+. c008 sta $ffff
+. c00b cli
+
+; ------------------------------------------------------------------------------
+; main loop: read key, process, repeat
+; ------------------------------------------------------------------------------
+. c00c lda $0e
+. c00e beq $c00c
+. c010 and #$60
+. c012 bne $c017
+. c014 jmp $c03c
+; ------------------------------------------------------------------------------
+; handle printable ASCII character
+; ------------------------------------------------------------------------------
+. c017 lda #$00
+. c019 sta $cc
+. c01b lda $0e
+. c01d jsr $d000
+. c020 jsr $d029
+
+; ------------------------------------------------------------------------------
+; entry point for end of main loop
+; ------------------------------------------------------------------------------
+. c023 jsr $d011
+. c026 lda $ce
+. c028 ldx $cf
+. c02a beq $c02e
+. c02c eor #$80
+. c02e jsr $d000
+. c031 lda #$00
+. c033 sta $0e
+. c035 lda #$01
+. c037 sta $cc
+. c039 jmp $c00c
+
+; ------------------------------------------------------------------------------
+; Handle non-printable characters.
+; this seems really inefficient...and not DRY but the following really just
+; spells out a long switch..case block. :)
+; ------------------------------------------------------------------------------
+. c03c lda #$00
+. c03e sta $cc
+. c040 lda $ce
+. c042 jsr $d000
+. c045 lda $0e
+;
+; ARROW_UP
+;
+. c047 cmp #$1c
+. c049 bne $c051
+. c04b jsr $d022
+. c04e jmp $c023
+;
+; ARROW_RIGHT
+;
+. c051 cmp #$1d
+. c053 bne $c05b
+. c055 jsr $d029
+. c058 jmp $c023
+;
+; ARROW_DOWN
+;
+. c05b cmp #$1e
+. c05d bne $c065
+. c05f jsr $d035
+. c062 jmp $c023
+;
+; ARROW_LEFT
+;
+. c065 cmp #$1f
+. c067 bne $c06f
+. c069 jsr $d043
+. c06c jmp $c023
+;
+; ENTER
+;
+. c06f cmp #$0d
+. c071 bne $c079
+. c073 jsr $d055
+. c076 jmp $c023
+;
+; DELETE
+;
+. c079 cmp #$08
+. c07b bne $c080
+. c07d jsr $d05d
+. c080 jmp $c023
+
+; ------------------------------------------------------------------------------
+; Plot one character at cursor position:
+; AC: ASCII value; XR, YR: row, column
+; (yes, reverse Cartesian for speed)
+; AC preserved.
+; ------------------------------------------------------------------------------
+. d000 pha
+. d001 ldx $ca
+. d003 ldy $cb
+. d005 lda $a0,x
+. d007 sta $f0
+. d009 lda $b4,x
+. d00b sta $f1
+. d00d pla
+. d00e sta ($f0),y
+. d010 rts
+
+; ------------------------------------------------------------------------------
+; Update character at cursor position;
+; store in :cursor_char
+; AC not preserved.
+; ------------------------------------------------------------------------------
+. d011 ldx $ca
+. d013 ldy $cb
+. d015 lda $a0,x
+. d017 sta $f0
+. d019 lda $b4,x
+. d01b sta $f1
+. d01d lda ($f0),y
+. d01f sta $ce
+. d021 rts
+
+; ------------------------------------------------------------------------------
+; Move cursor up. This move is very simple: move the cursor up one row, but
+; not beyond the top edge.
+; ------------------------------------------------------------------------------
+. d022 dec $ca
+. d024 bpl $d028
+. d026 inc $ca
+. d028 rts
+
+; ------------------------------------------------------------------------------
+; Move cursor right. If we go off the right edge, then we're on the next line.
+; Beacuse we have advanced one line, cursor right dovetails with cursor down. 
+; ------------------------------------------------------------------------------
+. d029 inc $cb
+. d02b lda #$32
+. d02d cmp $cb
+. d02f bne $d042
+. d031 lda #$00
+. d033 sta $cb
+; ------------------------------------------------------------------------------
+; entry point for cursor down
+; ------------------------------------------------------------------------------
+. d035 inc $ca
+. d037 lda #$14
+. d039 cmp $ca
+. d03b bne $d042
+. d03d dec $ca
+. d03f jsr $d08b
+. d042 rts
+
+; ------------------------------------------------------------------------------
+; Move cursor left. If we go off the left edge, then we're on the previous line.
+; Can't go any higher than the top line; in this situation, the cursor column
+; has rolled over to $ff, so we need to correct its position.
+; ------------------------------------------------------------------------------
+. d043 dec $cb
+. d045 bpl $d051
+. d047 lda $ca
+. d049 beq $d052
+. d04b lda #$31
+. d04d sta $cb
+. d04f dec $ca
+. d051 rts
+. d052 inc $cb
+. d054 rts
+
+; ------------------------------------------------------------------------------
+; Execute carriage return. It's as simple as moving the cursor to column 0,
+; and moving the cursor to the next line, which will trigger a scroll at the
+; bottom of the screen.
+; ------------------------------------------------------------------------------
+. d055 lda #$00
+. d057 sta $cb
+. d059 jsr $d035
+. d05c rts
+
+; ------------------------------------------------------------------------------
+; Execute delete/backspace. The cursor moves left, pulling everything up to the
+; end of the line along with it. A delete from column 0 will erase the last
+; character on the previous line.
+; ------------------------------------------------------------------------------
+. d05d jsr $d043
+. d060 ldx $ca
+. d062 ldy $cb
+. d064 iny
+. d065 cpy #$32
+. d067 beq $d07a
+. d069 lda $a0,x
+. d06b sta $f2
+. d06d lda $b4,x
+. d06f sta $f3
+. d071 lda ($f2),y
+. d073 dey
+. d074 sta ($f2),y
+. d076 iny
+. d077 jmp $d064
+. d07a dey
+. d07b lda #$20
+. d07d sta ($f2),y
+. d07f ldy $cb
+. d081 cpy #$31
+. d083 bne $d088
+. d085 jsr $d000
+. d088 sta $ce
+. d08a rts
+
+; ------------------------------------------------------------------------------
+; Scroll screen up one line. Copies one row at a time and fills the last line
+; with blanks.
+; ------------------------------------------------------------------------------
+. d08b ldx #$01
+. d08d ldy #$31
+. d08f lda $a0,x
+. d091 sta $f2
+. d093 lda $b4,x
+. d095 sta $f3
+. d097 lda ($f2),y
+. d099 pha
+. d09a dex
+. d09b lda $a0,x
+. d09d sta $f0
+. d09f lda $b4,x
+. d0a1 sta $f1
+. d0a3 pla
+. d0a4 sta ($f0),y
+. d0a6 inx
+. d0a7 dey
+. d0a8 bpl $d08f
+. d0aa inx
+. d0ab txa
+. d0ac cmp #$14
+. d0ae bne $d08d
+. d0b0 ldy #$31
+. d0b2 lda #$20
+. d0b4 sta $13b6,y
+. d0b7 dey
+. d0b8 bpl $d0b4
+. d0ba rts
+
+; ------------------------------------------------------------------------------
+; interrupt routine - flash cursor
+; preserves AC, XR, and YR
+; ------------------------------------------------------------------------------
+. e000 pha
+. e001 txa
+. e002 pha
+. e003 tya
+. e004 pha
+
+. e005 lda $cc
+. e007 beq $e029
+. e009 dec $cd
+. e00b bne $e029
+. e00d lda #$14
+. e00f sta $cd
+. e011 lda $cf
+. e013 eor #$01
+. e015 sta $cf
+. e017 ldx $ca
+. e019 lda $a0,x
+. e01b sta $f0
+. e01d lda $b4,x
+. e01f sta $f1
+. e021 ldy $cb
+. e023 lda ($f0),y
+. e025 eor #$80
+. e027 sta ($f0),y
+
+. e029 pla
+. e02a tay
+. e02b pla
+. e02c tax
+. e02d pla
+. e02e rti

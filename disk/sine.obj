@@ -1,0 +1,126 @@
+;
+; Oscillating sine wave.
+; A simple 650Vue demo by Dr. Myles Skinner.
+;
+; The sine wave is pre-calculated. Nothing fancy here.
+; The program logic is also a bit tangled up but it works. :)
+
+> fffc 00 c0 ; RESET vector
+
+
+
+
+> 00fc 40 00
+
+; some handy constants
+
+
+; ------------------------------------------------------------------------------
+; Screen RAM low bytes
+; ------------------------------------------------------------------------------
+> 00a0 00 32 64 96 c8 fa 2c 5e
+> 00a8 90 c2 f4 26 58 8a bc ee
+> 00b0 20 52 84 b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 00b4 10 10 10 10 10 10 11 11
+> 00bc 11 11 11 12 12 12 12 12
+> 00c4 13 13 13 13
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 0040 09 0b 0e 10 12 13 13 13
+> 0048 13 12 10 0e 0b 09 06 04
+> 0050 02 01 00 00 00 00 01 02
+> 0058 04 06
+> 005a 09 0b 0e 10 12 13 13 13
+> 0062 13 12 10 0e 0b 09 06 04
+> 006a 02 01 00 00 00 00 01 02
+> 0072 04 06
+> 0074 09 0b 0e 10 12 13 13 13
+> 007c 13 12 10 0e 0b 09 06 04
+> 0084 02 01 00 00 00 00 01 02
+> 008c 04 06 09
+
+; ------------------------------------------------------------------------------
+
+; ------------------------------------------------------------------------------
+. c000 lda #$2d
+. c002 ldy #$31
+. c004 sta $11f4,y
+. c007 dey
+. c008 bpl $c004
+
+. c00a lda #$40
+. c00c sta $fc
+
+. c00e lda #$7c
+. c010 ldy #$18
+. c012 ldx #$13
+. c014 jsr $c063
+. c017 dex
+. c018 bpl $c014
+
+. c01a lda #$2a
+. c01c ldy #$31
+. c01e pha
+. c01f lda ($fc),y
+. c021 tax
+. c022 pla
+. c023 jsr $c063
+. c026 dey
+. c027 bpl $c01e
+
+; remove the leftmost star
+. c029 ldy #$00
+. c02b lda ($fc),y
+. c02d tax
+. c02e lda #$20
+. c030 jsr $c063
+
+; advance pointer (roll over if needed)
+. c033 inc $fc
+. c035 lda $fc
+. c037 cmp #$5b
+. c039 beq $c00a
+
+; from left to right, plot each star and then remove the one to the right
+. c03b lda ($fc),y
+. c03d tax
+. c03e lda #$2a
+. c040 jsr $c063
+. c043 iny
+. c044 cpy #$32
+. c046 beq $c055
+. c048 lda #$20
+. c04a dey
+. c04b lda ($fc),y
+. c04d tax
+. c04e iny
+. c04f jsr $c063
+. c052 jmp $c03b
+
+; replace pipe that we erased when the star vacated
+. c055 ldy #$17
+. c057 lda ($fc),y
+. c059 tax
+. c05a lda #$7c
+. c05c iny
+. c05d jsr $c063
+. c060 jmp $c00e
+
+; ------------------------------------------------------------------------------
+; Plot one character on screen:
+; AC: ASCII value; XR, YR: row, column
+; ------------------------------------------------------------------------------
+. c063 pha
+. c064 lda $a0,x
+. c066 sta $fe
+. c068 lda $b4,x
+. c06a sta $ff
+. c06c pla
+. c06d sta ($fe),y
+. c06f rts

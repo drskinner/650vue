@@ -1,0 +1,112 @@
+;
+; Interrupt-driven timer program.
+; A simple 650Vue IRQ demo by Dr. Myles Skinner.
+;
+; timer routine starts at $c000
+; interrupt service routine at $d000
+; timer reset at $b000
+
+; Timer runs on the IRQ synced to the
+; browser refresh rate (usually 60Hz).
+
+> fffc 00 c0 ; RESET vector
+
+; initialize clock registers
+; values are ASCII minus $30
+; $ff: interrupt cycle counter
+; $fe: tenths of a second
+; $fd: dot
+; $fb, $fc: seconds
+; $fa: colon
+; $f8, $f9: minutes
+> 00f8 00 00 0a 00 00 fe 00 06
+
+:clock_base = $f8
+:min_tens   = $f8
+:min_units  = $f9
+:sec_tens   = $fb
+:sec_units  = $fc
+:tenths     = $fe
+:cycles     = $ff   ; jiffy timer
+:screen     = $11d7 ; centered on screen
+
+:ascii_zero = #$30
+
+; --------------------------------------
+; reset timer - g $b000 to reset
+; --------------------------------------
+* = $b000
+reset   lda #$00
+        sta :tenths
+        sta :sec_units
+        sta :sec_tens
+        sta :min_units
+        sta :min_tens
+        lda :ascii_zero
+        sta :screen
+        sta :screen+1
+        sta :screen+3
+        sta :screen+4
+        sta :screen+6
+        brk
+
+; --------------------------------------
+; set IRQ vector
+; --------------------------------------
+* = $c000
+        sei
+        lda #$00
+        sta $fffe ; vector low byte
+        lda #$d0
+        sta $ffff ; vector high byte
+        cli
+; --------------------------------------
+; draw clock ad infinitum
+; --------------------------------------
+draw    ldx #$06
+loop    lda :clock_base,x ; get clock "register"
+        clc
+        adc :ascii_zero   ; convert to ASCII digit   
+        sta :screen,x     ; print digit
+        dex
+        bpl loop
+        jmp draw
+
+; --------------------------------------
+; interrupt service routine
+; preserves AC, XR; destroys YR
+; --------------------------------------
+* = $d000
+        pha
+        ldy #$00
+        dec :cycles     ; decrease timer
+        bne return      ; RTI if not 0
+        lda #$06        ; 6 cycles = 1/10 sec
+        sta :cycles     ; reset timer
+        inc :tenths     ; increment tenths
+        lda :tenths
+        cmp #$0a        ; tenths roll over?
+        bne return
+        sty :tenths     ; reset tenths
+        inc :sec_units  ; increment second units
+        lda :sec_units
+        cmp #$0a        ; second units roll over?
+        bne return
+        sty :sec_units  ; reset second units
+        inc :sec_tens   ; increment second tens
+        lda :sec_tens
+        cmp #$06        ; 60 seconds?
+        bne return
+        sty :sec_tens   ; reset second tens
+        inc :min_units  ; increment minute units
+        lda :min_units
+        cmp #$0a        ; 10 minutes?
+        bne return
+        sty :min_units  ; reset minute units
+        inc :min_tens
+        lda :min_tens
+        cmp #$06        ; 60 minutes?
+        bne return
+        sty :min_tens
+return  pla       
+        rti

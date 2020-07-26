@@ -1,0 +1,18 @@
+;
+; Screenful o' dots...
+; A simple 650Vue demo by Dr. Myles Skinner.
+
+> fffc 00 c0 ; RESET vector
+
+:dot = #$2e
+* = $c000
+
+        lda :dot
+        ldx #$fa
+loop    sta $0fff,x
+        sta $10f9,x
+        sta $11f3,x
+        sta $12ed,x
+        dex
+        bne loop
+        brk

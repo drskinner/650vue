@@ -1,0 +1,23 @@
+;
+; comment
+
+; load bytes into memory
+> c000 01 02 03 04
+
+; set address for assembly
+* = $c000
+
+:symbol  = #$41
+:address = $ffd2
+
+myLabel nop
+        lda :symbol     ; treat symbol as a value
+        jsr :address    ; or an address
+        jmp :address+1  ; can add offsets to symbols
+        jmp myLabel     ; labels must be unique
+
+; strings are null-terminated. You can apply labels.
+someString !str `Hello, world!`
+
+; char arrays are NOT null-terminated
+someChars  !chr `abcdefghij`
