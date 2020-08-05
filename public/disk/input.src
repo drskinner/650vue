@@ -1,0 +1,384 @@
+;
+; Routines to collect string input and print strings on screen.
+; 650Vue demo by Dr. Myles Skinner.
+
+> fffc 00 c0 ; RESET vector
+
+:zp_last_key   = $0e  ; last key press
+:screen_row_lo = $a0  ; screen RAM low address table
+:screen_row_hi = $b4  ; screen RAM high address table
+
+:cursor_row    = $ca  ; cursor y position
+:cursor_col    = $cb  ; cursor x position
+:blink_enabled = $cc  ; cursor blink enabled
+:blink_counter = $cd  ; countdown timer
+:cursor_char   = $ce  ; character under cursor
+:blink_state   = $cf  ; cursor blink state
+
+> 00ca 00 00          ; cursor at "home" position
+> 00cc 00             ; blink on
+> 00cd 14             ; cursor timer
+
+:input_prompt   = $e0  ; character for prompt (`?`)
+:input_length   = $e1  ; max chars for input
+> 00e0 3f 08
+:input_buffer   = $0200
+
+:plot_row       = $f0
+:plot_row_lo    = $f0
+:plot_row_hi    = $f1
+:read_row       = $f2
+:read_row_lo    = $f2
+:read_row_hi    = $f3
+:string_ptr     = $f4
+:string_ptr_lo  = $f4
+:string_ptr_hi  = $f5
+
+:xr_temp        = $fa
+:yr_temp        = $fb
+
+:delete         = #$08
+:enter          = #$0d
+:ascii_null     = $00
+:ascii_space    = $20
+:last_row_base  = $13b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM low bytes
+; ------------------------------------------------------------------------------
+> 00a0 00 32 64 96 c8 fa 2c 5e
+> 00a8 90 c2 f4 26 58 8a bc ee
+> 00b0 20 52 84 b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 00b4 10 10 10 10 10 10 11 11
+> 00bc 11 11 11 12 12 12 12 12
+> 00c4 13 13 13 13
+
+* = $2000
+string01      !str `What is your name (max. 8 characters)`
+string02      !str `Press any key to exit.`
+string03      !str `Done.`
+string04      !str `Hello, `
+string05      !str `, welcome to my input demo.`
+stringName    !res $09
+              !chr `END OF STRINGS`
+; the `END OF STRINGS` does nothing but if you look at memory from $2000,
+; you can see how the strings and reserved bytes are laid out in memory.
+
+; ------------------------------------------------------------------------------
+; set IRQ vector to $e000
+; ------------------------------------------------------------------------------
+* = $c000
+initialize  sei
+            lda #$00
+            sta $fffe ; vector low byte
+            lda #$e0
+            sta $ffff ; vector high byte
+            cli
+
+            lda #$00
+            sta :cursor_row
+            sta :cursor_col
+            jsr clearScreen
+
+main        @setStr string01
+            jsr printString
+
+            @setStr stringName
+            jsr inputWithPrompt
+            jsr doCarriageReturn
+            jsr doCarriageReturn
+
+            @setStr string04
+            jsr printString
+            @setStr stringName
+            jsr printString
+            @setStr string05
+            jsr printStringWithCR
+            jsr doCarriageReturn
+
+pressAnyKey @setStr string02
+            jsr printString
+            jsr doCarriageReturn
+            jsr doCarriageReturn
+waitForKey  lda :zp_last_key
+            beq waitForKey
+            @setStr string03
+            jsr printString
+            lda #$00
+            sta :zp_last_key
+            brk
+
+; ------------------------------------------------------------------------------
+; Move cursor right. If we go off the right edge, then we're on the next line.
+; Beacuse we have advanced one line, cursor right dovetails with cursor down. 
+; ------------------------------------------------------------------------------
+moveCursorRight     inc :cursor_col     ; advance cursor column (right)
+                    lda #$32            ; #$32 == past right edge
+                    cmp :cursor_col     ; did we pass right edge?
+                    bne exitCursorRight ; skip if in bounds
+                    lda #$00            ; reset cursor to left
+                    sta :cursor_col
+; ------------------------------------------------------------------------------
+; entry point for cursor down
+; ------------------------------------------------------------------------------
+moveCursorDown      inc :cursor_row     ; current cursor row
+                    lda #$14            ; #$14 == past bottom edge
+                    cmp :cursor_row     ; did we pass bottom?
+                    bne exitCursorRight ; skip if in bounds
+                    dec :cursor_row     ; bring cursor back to bottom row
+                    jsr scrollScreen
+exitCursorRight     rts
+
+; ------------------------------------------------------------------------------
+; Move cursor left. If we go off the left edge, then we're on the previous line.
+; Can't go any higher than the top line; in this situation, the cursor column
+; has rolled over to $ff, so we need to correct its position.
+; ------------------------------------------------------------------------------
+moveCursorLeft      dec :cursor_col
+                    bpl exitCursorLeft0 ; skip if in bounds
+                    lda :cursor_row     ; check for top row
+                    beq exitCursorLeft1 ; skip if top (== 0)
+                    lda #$31            ; set cursor to right
+                    sta :cursor_col
+                    dec :cursor_row
+exitCursorLeft0     rts
+exitCursorLeft1     inc :cursor_col     ; column is $ff, make $00
+                    rts
+
+; ------------------------------------------------------------------------------
+; Execute carriage return. It's as simple as moving the cursor to column 0,
+; and moving the cursor to the next line, which will trigger a scroll at the
+; bottom of the screen.
+; ------------------------------------------------------------------------------
+doCarriageReturn    lda #$00            ; set column to zero
+                    sta :cursor_col
+                    jsr moveCursorDown  ; call cursor down
+                    rts
+
+; ------------------------------------------------------------------------------
+; Execute backspace. The cursor moves left, erasing where it lands.
+; ------------------------------------------------------------------------------
+doBackspace         lda #$00
+                    jsr plotCharAtCursor
+                    jsr moveCursorLeft    ; cursor left subroutine
+                    jsr plotCharAtCursor
+                    rts
+
+; ------------------------------------------------------------------------------
+; Scroll screen up one line. Copies one row at a time and fills the last line
+; with blanks.
+; ------------------------------------------------------------------------------
+scrollScreen    ldx #$01              ; set XR to row 1
+startRowScroll  ldy #$31              ; set YR to col 49
+loopScrollChar  lda :screen_row_lo,x  ; find RAM address of position
+                sta :read_row_lo
+                lda :screen_row_hi,x
+                sta :read_row_hi
+                lda (:read_row),y ; read character at position
+                pha                   ; save character to stack
+                dex                   ; previous row
+                lda :screen_row_lo,x  ; find RAM address of new position
+                sta :plot_row_lo
+                lda :screen_row_hi,x
+                sta :plot_row_hi
+                pla                   ; get character back from stack
+                sta (:plot_row),y ; plot character
+                inx                   ; back to current row
+                dey                   ; left one column
+                bpl loopScrollChar    ; loop until negative
+                inx                   ; next row
+                txa
+                cmp #$14              ; is row past bottom?
+                bne startRowScroll    ; still rows, keep looping
+                ldy #$31              ; loop to clear last line
+                lda :ascii_space
+loopLastLine    sta :last_row_base,y
+                dey
+                bpl loopLastLine
+                rts
+
+; ------------------------------------------------------------------------------
+; Plot one character at cursor position:
+; AC: ASCII value; XR, YR: row, column
+; (yes, reverse Cartesian for speed)
+; AC preserved.
+; ------------------------------------------------------------------------------
+plotCharAtCursor    pha
+                    ldx :cursor_row
+                    ldy :cursor_col
+                    lda :screen_row_lo,x
+                    sta :plot_row_lo
+                    lda :screen_row_hi,x
+                    sta :plot_row_hi
+                    pla 
+                    sta (:plot_row),y
+                    rts
+
+; ------------------------------------------------------------------------------
+; Print one character at cursor position:
+; AC: ASCII value; XR, YR: row, column
+; Similar to plotCharAtCursor but finishes with a cursor right.
+; AC preserved.
+; ------------------------------------------------------------------------------
+printCharAtCursor   pha
+                    ldx :cursor_row
+                    ldy :cursor_col
+                    lda :screen_row_lo,x
+                    sta :plot_row_lo
+                    lda :screen_row_hi,x
+                    sta :plot_row_hi
+                    pla 
+                    sta (:plot_row),y
+                    jsr moveCursorRight
+                    rts
+
+; ------------------------------------------------------------------------------
+; print string at cursor location
+; :string_ptr - address of string
+; set :cursor_row and :cursor_col before calling
+; ------------------------------------------------------------------------------
+printString         ldy #$00
+loopPrintString     lda (:string_ptr),y
+                    beq exitPrintString
+                    sty :yr_temp
+                    jsr plotCharAtCursor
+                    jsr moveCursorRight
+                    ldy :yr_temp
+                    iny
+                    jmp loopPrintString
+exitPrintString     rts
+
+; ------------------------------------------------------------------------------
+; print string at cursor location
+; :string_ptr - address of string
+; set :cursor_row and :cursor_col before calling
+; ------------------------------------------------------------------------------
+printStringWithCR   ldy #$00
+loopPrintStringCR   lda (:string_ptr),y
+                    beq exitPrintString
+                    sty :yr_temp
+                    jsr plotCharAtCursor
+                    jsr moveCursorRight
+                    ldy :yr_temp
+                    iny
+                    jmp loopPrintStringCR
+                    jsr doCarriageReturn
+exitPrintStringCR   rts
+
+; ------------------------------------------------------------------------------
+; Clear screen; fills screen with nulls
+; ------------------------------------------------------------------------------
+clearScreen         lda :ascii_null
+                    ldx #$fa
+loopClearScreen     sta $0fff,x
+                    sta $10f9,x
+                    sta $11f3,x
+                    sta $12ed,x
+                    dex
+                    bne loopClearScreen
+                    rts
+
+; ------------------------------------------------------------------------------
+; input string from keyboard
+; :string_ptr   - address of string to write
+; :input_prompt - character for prompt
+; ;input_length - max characters
+; set :cursor_row and :cursor_col before calling
+; ------------------------------------------------------------------------------
+inputWithPrompt     lda :input_prompt
+                    jsr printCharAtCursor
+                    lda :ascii_space
+                    jsr printCharAtCursor
+doInput             lda #$01
+                    sta :blink_enabled
+                    ldx #$00
+inputReadKeyboard   lda :zp_last_key
+                    beq inputReadKeyboard
+
+testDelete          cmp :delete
+                    bne testEnter           ; check another match
+                    cpx #$00
+                    beq inputClearLastKey   ; don't backspace beyond 0
+                    stx :xr_temp
+                    jsr doBackspace
+                    ldx :xr_temp
+                    dex
+                    sta :input_buffer,x     ; put 0 in input buffer at cursor
+                    jmp inputClearLastKey
+
+testEnter           cmp :enter
+                    bne testPrintable
+                    lda :ascii_space
+                    jsr plotCharAtCursor
+                    jmp moveBufferToString
+
+testPrintable       and #$60                ; 0110 0000 mask; destroys AC
+                    bne printableChar       ; printable?
+                    jmp inputClearLastKey   ; jump if not printable
+printableChar       cpx :input_length
+                    beq inputClearLastKey
+                    stx :xr_temp
+                    lda :zp_last_key
+                    sta :input_buffer,x     ; transfer character to buffer
+                    jsr printCharAtCursor
+                    ldx :xr_temp
+                    inx
+
+inputClearLastKey   lda #$00
+                    sta :zp_last_key
+                    jmp inputReadKeyboard
+
+moveBufferToString  ldy #$00
+loopMoveBuffer      lda :input_buffer,y
+                    beq terminateString     ; end of string
+                    sta (:string_ptr),y     ; move buffer byte to string
+                    lda #$00
+                    sta :input_buffer,y     ; clear buffer byte
+                    iny
+                    jmp loopMoveBuffer
+terminateString     sta (:string_ptr),y
+
+exitInput           sta :zp_last_key        ; clear last key (AC is already zero)
+                    sta :blink_enabled      ; disable cursor blink
+                    rts
+
+; ------------------------------------------------------------------------------
+; interrupt routine - flash cursor
+; preserves AC, XR, and YR
+; ------------------------------------------------------------------------------
+* = $e000
+irqService  pha                   ; stash registers
+            txa
+            pha
+            tya
+            pha
+
+            lda :blink_enabled    ; 0 == blink off
+            beq exitIRQ           ; exit if blink off
+            dec :blink_counter    ; decrease countdown
+            bne exitIRQ           ; exit if not zero
+            lda #$14              ; reload countdown
+            sta :blink_counter
+            lda :blink_state      ; toggle blink state
+            eor #$01
+            sta :blink_state
+            ldx :cursor_row       ; get row base screen address
+            lda :screen_row_lo,x  ; into zero page :plot_row
+            sta :plot_row_lo
+            lda :screen_row_hi,x
+            sta :plot_row_hi
+            ldy :cursor_col
+            lda (:plot_row),y ; get cursor RAM address
+            eor #$80              ; toggle inverse video
+            sta (:plot_row),y ; write new char to screen
+
+exitIRQ     pla                   ; restore registers
+            tay
+            pla
+            tax
+            pla
+            rti

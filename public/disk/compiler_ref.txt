@@ -21,3 +21,10 @@ someString !str `Hello, world!`
 
 ; char arrays are NOT null-terminated
 someChars  !chr `abcdefghij`
+
+; reserve a series of bytes (initialized with zeroes)
+someSpace  !res $09     ; reserve 9 bytes
+
+; read lsb/msb of label address
+        lda #<someString ; low byte
+        lda #>someString ; high byte

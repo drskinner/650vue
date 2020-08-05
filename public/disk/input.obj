@@ -1,0 +1,387 @@
+;
+; Routines to collect string input and print strings on screen.
+; 650Vue demo by Dr. Myles Skinner.
+
+> fffc 00 c0 ; RESET vector
+
+
+
+> 00ca 00 00 ; cursor at "home" position
+> 00cc 00 ; blink on
+> 00cd 14 ; cursor timer
+
+> 00e0 3f 08
+
+
+
+
+; ------------------------------------------------------------------------------
+; Screen RAM low bytes
+; ------------------------------------------------------------------------------
+> 00a0 00 32 64 96 c8 fa 2c 5e
+> 00a8 90 c2 f4 26 58 8a bc ee
+> 00b0 20 52 84 b6
+
+; ------------------------------------------------------------------------------
+; Screen RAM high bytes
+; ------------------------------------------------------------------------------
+> 00b4 10 10 10 10 10 10 11 11
+> 00bc 11 11 11 12 12 12 12 12
+> 00c4 13 13 13 13
+
+> 2000 57 68 61 74 20 69 73 20
+> 2008 79 6F 75 72 20 6E 61 6D
+> 2010 65 20 28 6D 61 78 2E 20
+> 2018 38 20 63 68 61 72 61 63
+> 2020 74 65 72 73 29 00
+> 2026 50 72 65 73 73 20 61 6E
+> 202e 79 20 6B 65 79 20 74 6F
+> 2036 20 63 6F 6E 74 69 6E 75
+> 203e 65 2E 00
+> 2041 45 78 69 74 69 6E 67 2E
+> 2049 00
+> 204a 48 65 6C 6C 6F 2C 20 00
+> 2052 2C 20 77 65 6C 63 6F 6D
+> 205a 65 20 74 6F 20 6D 79 20
+> 2062 69 6E 70 75 74 20 64 65
+> 206a 6D 6F 2E 00
+> 206e 00 00 00 00 00 00 00 00
+> 2076 00
+> 2077 45 4E 44 20 4F 46 20 53
+> 207f 54 52 49 4E 47 53
+
+; ------------------------------------------------------------------------------
+; set IRQ vector to $e000
+; ------------------------------------------------------------------------------
+. c000 sei
+. c001 lda #$00
+. c003 sta $fffe
+. c006 lda #$e0
+. c008 sta $ffff
+. c00b cli
+
+. c00c lda #$00
+. c00e sta $ca
+. c010 sta $cb
+. c012 jsr $c13c
+
+; and make a macro out of setting string pointer
+
+. c015 lda #$00
+. c017 sta $f4
+. c019 lda #$20
+. c01b sta $f5
+. c01d jsr $c10f
+
+. c020 lda #$6e
+. c022 sta $f4
+. c024 lda #$20
+. c026 sta $f5
+. c028 jsr $c150
+. c02b jsr $c0a6
+. c02e jsr $c0a6
+
+. c031 lda #$4a
+. c033 sta $f4
+. c035 lda #$20
+. c037 sta $f5
+. c039 jsr $c10f
+. c03c lda #$6e
+. c03e sta $f4
+. c040 lda #$20
+. c042 sta $f5
+. c044 jsr $c10f
+. c047 lda #$52
+. c049 sta $f4
+. c04b lda #$20
+. c04d sta $f5
+. c04f jsr $c124
+. c052 jsr $c0a6
+
+. c055 lda #$26
+. c057 sta $f4
+. c059 lda #$20
+. c05b sta $f5
+. c05d jsr $c10f
+. c060 jsr $c0a6
+. c063 jsr $c0a6
+. c066 lda $0e
+. c068 beq $c066
+. c06a lda #$41
+. c06c sta $f4
+. c06e lda #$20
+. c070 sta $f5
+. c072 jsr $c10f
+. c075 lda #$00
+. c077 sta $0e
+. c079 brk
+
+; ------------------------------------------------------------------------------
+; Move cursor right. If we go off the right edge, then we're on the next line.
+; Beacuse we have advanced one line, cursor right dovetails with cursor down.
+; ------------------------------------------------------------------------------
+. c07a inc $cb
+. c07c lda #$32
+. c07e cmp $cb
+. c080 bne $c093
+. c082 lda #$00
+. c084 sta $cb
+; ------------------------------------------------------------------------------
+; entry point for cursor down
+; ------------------------------------------------------------------------------
+. c086 inc $ca
+. c088 lda #$14
+. c08a cmp $ca
+. c08c bne $c093
+. c08e dec $ca
+. c090 jsr $c0ba
+. c093 rts
+
+; ------------------------------------------------------------------------------
+; Move cursor left. If we go off the left edge, then we're on the previous line.
+; Can't go any higher than the top line; in this situation, the cursor column
+; has rolled over to $ff, so we need to correct its position.
+; ------------------------------------------------------------------------------
+. c094 dec $cb
+. c096 bpl $c0a2
+. c098 lda $ca
+. c09a beq $c0a3
+. c09c lda #$31
+. c09e sta $cb
+. c0a0 dec $ca
+. c0a2 rts
+. c0a3 inc $cb
+. c0a5 rts
+
+; ------------------------------------------------------------------------------
+; Execute carriage return. It's as simple as moving the cursor to column 0,
+; and moving the cursor to the next line, which will trigger a scroll at the
+; bottom of the screen.
+; ------------------------------------------------------------------------------
+. c0a6 lda #$00
+. c0a8 sta $cb
+. c0aa jsr $c086
+. c0ad rts
+
+; ------------------------------------------------------------------------------
+; Execute backspace. The cursor moves left, erasing where it lands.
+; ------------------------------------------------------------------------------
+. c0ae lda #$00
+. c0b0 jsr $c0ea
+. c0b3 jsr $c094
+. c0b6 jsr $c0ea
+. c0b9 rts
+
+; ------------------------------------------------------------------------------
+; Scroll screen up one line. Copies one row at a time and fills the last line
+; with blanks.
+; ------------------------------------------------------------------------------
+. c0ba ldx #$01
+. c0bc ldy #$31
+. c0be lda $a0,x
+. c0c0 sta $f2
+. c0c2 lda $b4,x
+. c0c4 sta $f3
+. c0c6 lda ($f2),y
+. c0c8 pha
+. c0c9 dex
+. c0ca lda $a0,x
+. c0cc sta $f0
+. c0ce lda $b4,x
+. c0d0 sta $f1
+. c0d2 pla
+. c0d3 sta ($f0),y
+. c0d5 inx
+. c0d6 dey
+. c0d7 bpl $c0be
+. c0d9 inx
+. c0da txa
+. c0db cmp #$14
+. c0dd bne $c0bc
+. c0df ldy #$31
+. c0e1 lda $20
+. c0e3 sta $13b6,y
+. c0e6 dey
+. c0e7 bpl $c0e3
+. c0e9 rts
+
+; ------------------------------------------------------------------------------
+; Plot one character at cursor position:
+; AC: ASCII value; XR, YR: row, column
+; (yes, reverse Cartesian for speed)
+; AC preserved.
+; ------------------------------------------------------------------------------
+. c0ea pha
+. c0eb ldx $ca
+. c0ed ldy $cb
+. c0ef lda $a0,x
+. c0f1 sta $f0
+. c0f3 lda $b4,x
+. c0f5 sta $f1
+. c0f7 pla
+. c0f8 sta ($f0),y
+. c0fa rts
+
+; ------------------------------------------------------------------------------
+; Print one character at cursor position:
+; AC: ASCII value; XR, YR: row, column
+; Similar to $c0ea but finishes with a cursor right.
+; AC preserved.
+; ------------------------------------------------------------------------------
+. c0fb pha
+. c0fc ldx $ca
+. c0fe ldy $cb
+. c100 lda $a0,x
+. c102 sta $f0
+. c104 lda $b4,x
+. c106 sta $f1
+. c108 pla
+. c109 sta ($f0),y
+. c10b jsr $c07a
+. c10e rts
+
+; ------------------------------------------------------------------------------
+; print string at cursor location
+; :string_ptr - address of string
+; set :cursor_row and :cursor_col before calling
+; ------------------------------------------------------------------------------
+. c10f ldy #$00
+. c111 lda ($f4),y
+. c113 beq $c123
+. c115 sty $fb
+. c117 jsr $c0ea
+. c11a jsr $c07a
+. c11d ldy $fb
+. c11f iny
+. c120 jmp $c111
+. c123 rts
+
+; ------------------------------------------------------------------------------
+; print string at cursor location
+; :string_ptr - address of string
+; set :cursor_row and :cursor_col before calling
+; ------------------------------------------------------------------------------
+. c124 ldy #$00
+. c126 lda ($f4),y
+. c128 beq $c123
+. c12a sty $fb
+. c12c jsr $c0ea
+. c12f jsr $c07a
+. c132 ldy $fb
+. c134 iny
+. c135 jmp $c126
+. c138 jsr $c0a6
+. c13b rts
+
+; ------------------------------------------------------------------------------
+; Clear screen; fills screen with nulls
+; ------------------------------------------------------------------------------
+. c13c lda $00
+. c13e ldx #$fa
+. c140 sta $0fff,x
+. c143 sta $10f9,x
+. c146 sta $11f3,x
+. c149 sta $12ed,x
+. c14c dex
+. c14d bne $c140
+. c14f rts
+
+; ------------------------------------------------------------------------------
+; input string from keyboard
+; :string_ptr - address of string to write
+; :input_prompt - character for prompt
+; ;input_length - max characters
+; set :cursor_row and :cursor_col before calling
+; ------------------------------------------------------------------------------
+. c150 lda $e0
+. c152 jsr $c0fb
+. c155 lda $20
+. c157 jsr $c0fb
+. c15a lda #$01
+. c15c sta $cc
+. c15e ldx #$00
+. c160 lda $0e
+. c162 beq $c160
+
+. c164 cmp #$08
+. c166 bne $c17a
+. c168 cpx #$00
+. c16a beq $c19e
+. c16c stx $fa
+. c16e jsr $c0ae
+. c171 ldx $fa
+. c173 dex
+. c174 sta $0200,x
+. c177 jmp $c19e
+
+. c17a cmp #$0d
+. c17c bne $c186
+. c17e lda $20
+. c180 jsr $c0ea
+. c183 jmp $c1a5
+
+. c186 and #$60
+. c188 bne $c18d
+. c18a jmp $c19e
+. c18d cpx $e1
+. c18f beq $c19e
+. c191 stx $fa
+. c193 lda $0e
+. c195 sta $0200,x
+. c198 jsr $c0fb
+. c19b ldx $fa
+. c19d inx
+
+. c19e lda #$00
+. c1a0 sta $0e
+. c1a2 jmp $c160
+
+. c1a5 ldy #$00
+. c1a7 lda $0200,y
+. c1aa beq $c1b7
+. c1ac sta ($f4),y
+. c1ae lda #$00
+. c1b0 sta $0200,y
+. c1b3 iny
+. c1b4 jmp $c1a7
+. c1b7 sta ($f4),y
+
+. c1b9 sta $0e
+. c1bb sta $cc
+. c1bd rts
+
+; ------------------------------------------------------------------------------
+; interrupt routine - flash cursor
+; preserves AC, XR, and YR
+; ------------------------------------------------------------------------------
+. e000 pha
+. e001 txa
+. e002 pha
+. e003 tya
+. e004 pha
+
+. e005 lda $cc
+. e007 beq $e029
+. e009 dec $cd
+. e00b bne $e029
+. e00d lda #$14
+. e00f sta $cd
+. e011 lda $cf
+. e013 eor #$01
+. e015 sta $cf
+. e017 ldx $ca
+. e019 lda $a0,x
+. e01b sta $f0
+. e01d lda $b4,x
+. e01f sta $f1
+. e021 ldy $cb
+. e023 lda ($f0),y
+. e025 eor #$80
+. e027 sta ($f0),y
+
+. e029 pla
+. e02a tay
+. e02b pla
+. e02c tax
+. e02d pla
+. e02e rti

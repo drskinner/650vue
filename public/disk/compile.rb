@@ -5,6 +5,7 @@ class Compiler
     @symbols = {}
     @labels = {}
     @address = 0
+    @stringLabel = ''
 
     if ARGV[0]
       @filename = ARGV[0]
@@ -21,15 +22,26 @@ class Compiler
     part
   end
 
-  def resolve_labels(part)
-    @labels.sort_by {|k, _| k.length }.reverse.each { |k, v| part.gsub!(k, "$#{v.to_s(16)}") }
-    part
+  def resolve_labels(line)
+    @labels.sort_by {|k, _| k.length }.reverse.each { |k, v| line.gsub!(k, "$#{v.to_s(16)}") }
+    parts = line.split(' ')
+    if parts[3].nil?
+      line
+    else
+      if parts[3].match(/#<\$(\d|[a-f]){4}$/)
+        parts[3] = "#$#{parts[3][5..6]}"
+      elsif parts[3].match(/#>\$(\d|[a-f]){4}$/)
+        parts[3] = "#$#{parts[3][3..4]}"
+      end
+      "#{parts.join(' ')}\n"
+    end
   end
 
   def pass_one
     File.open("./#{@filename}.src", 'r') do |file|
       file.each do |line|
         parts = line.split(' ')
+        macro = false
 
         case line[0]
         when ':'
@@ -45,6 +57,17 @@ class Compiler
             operand = line.match(/`(.*?)`/).to_s.gsub('`', '') + "\0"
           elsif opcode == '!chr'
             operand = line.match(/`(.*?)`/).to_s.gsub('`', '')
+          elsif opcode == '!res'
+            count = line.match(/(\d|[a-f]){2}/).to_s.to_i(16)
+            operand = ''
+            count.times do
+              operand << "\0"
+            end
+          elsif opcode == '@setStr'
+            macro = true
+            opcode = 'lda'
+            @stringLabel = parts[1]
+            operand = "#<#{@stringLabel}"
           else
             operand = resolve_symbols(parts[1]) unless parts[1].nil? || parts[1][0] == ';'
           end
@@ -63,6 +86,17 @@ class Compiler
             operand = line.match(/`(.*?)`/).to_s.gsub('`', '') + "\0"
           elsif opcode == '!chr'
             operand = line.match(/`(.*?)`/).to_s.gsub('`', '')
+          elsif opcode == '!res'
+            count = line.match(/(\d|[a-f]){2}/).to_s.to_i(16)
+            operand = ''
+            count.times do
+              operand << "\0"
+            end
+          elsif opcode == '@setStr'
+            macro = true
+            opcode = 'lda'
+            @stringLabel = parts[2]
+            operand = "#<#{@stringLabel}"
           else
             operand = resolve_symbols(parts[2]) unless parts[2].nil? || parts[2][0] == ';'
           end
@@ -74,6 +108,14 @@ class Compiler
           end
         else
           @source_lines << line if line == "\n"
+        end
+
+        # this is a cheap hack for now
+        if macro
+          @source_lines << { opcode: 'sta', operand: resolve_symbols(':string_ptr_lo') }
+          @source_lines << { opcode: 'lda', operand: "#>#{@stringLabel}" }
+          @source_lines << { opcode: 'sta', operand: resolve_symbols(':string_ptr_hi') }
+          macro = false
         end
       end
     end
@@ -98,6 +140,8 @@ class Compiler
       2 # indirect, indexed
     elsif operand.match(/\(\$(\d|[a-f]){2},x\)$/)
       2 # indexed, indirect
+    elsif operand.match(/[<>]/)
+      2 # msb/lsb of a 16-bit
     else
       (opcode[0] == 'b' && opcode[1] != 'i') ? 2 : 3 # relative : absolute
     end
@@ -119,7 +163,7 @@ class Compiler
       else
         if line[:set_address].to_i > 0
           @address = line[:set_address]
-        elsif line[:opcode] == '!str' || line[:opcode] == '!chr'
+        elsif %w[!str !chr !res].include?(line[:opcode])
           @labels[line[:label]] = @address unless line[:label].nil?
           string_to_memory(line[:operand])
         else
