@@ -4,6 +4,8 @@
 # The Parser scans the source code and prepares each line, separating it
 # into label, opcode, and operand. Lines that are not valid 6502 assembly 
 # instructions are left untouched.
+#
+# Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 #------------------------------------------------------------------------------
 
 class Parser

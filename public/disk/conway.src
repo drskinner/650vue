@@ -1,10 +1,14 @@
+; ------------------------------------------------------------------------------
 ; John Conway's "Game of Life" cellular automaton.
-; 650Vue version by Dr. Myles Skinner.
+; 650Vue version by Dr. Myles L. Skinner.
 ;
 ; This 6502 version is inefficient but uses subroutines to make the
 ; structure more clear. I could replace every JSR/RTS with inline
 ; code to save a few cycles, but this program runs comfortably at
 ; 600kHz without delay loops so I find the tradeoff acceptable.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
 @SetReset $c000
 

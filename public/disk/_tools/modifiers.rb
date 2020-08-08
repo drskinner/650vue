@@ -4,6 +4,8 @@
 # The Modifiers object modifies operands in two ways:
 #   (1) converting binary and decimal numbers into hex, and
 #   (2) adjusting values with the +, <, and > modifiers.
+#
+# Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 #------------------------------------------------------------------------------
 
 class Modifiers

@@ -3,6 +3,8 @@
 #
 # The linker allows the base .src file to include additional .src files through
 # the #INCLUDE directive. Does not currently support nested includes.
+#
+# Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 #------------------------------------------------------------------------------
 
 class Linker

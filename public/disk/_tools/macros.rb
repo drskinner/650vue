@@ -4,6 +4,8 @@
 # The Macros object scans the source code and performs substitutions for any
 # @Macros it finds. Macros must resolve to a Ruby method in this file; 650Vue
 # does not support dynamically-defined macros at this time.
+#
+# Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 #------------------------------------------------------------------------------
 
 class Macros

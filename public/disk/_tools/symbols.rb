@@ -4,6 +4,8 @@
 # The Symbols object scans the source code, builds a table of symbol definitions,
 # and performs substitutions for any :symbols it finds. This object recognizes
 # modifiers (<, >, or +) to symbols and adjusts their values accordingly.
+#
+# Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 #------------------------------------------------------------------------------
 
 require './_tools/modifiers.rb'

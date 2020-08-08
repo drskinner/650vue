@@ -16,6 +16,8 @@
 #
 # The object file can be loaded into 650Vue and will be handled as if the
 # user had typed each line into the terminal.
+#
+# Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 #------------------------------------------------------------------------------
 
 require './_tools/allocations.rb'

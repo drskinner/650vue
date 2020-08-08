@@ -68,12 +68,12 @@ target address during assembly:
 * = $c000
 myLoop      lda #$00      ; myLoop will be assigned $c000
             jmp myLoop    ; equivalent to jmp $c000
+someString  !str `Hello, world!`
 
 ; someString will be assigned $c005, because there have been
 ; 5 bytes since myLoop ($c000). someChars will point to the
 ; memory location of the `0` in `0123456789`:
 
-someString  !str `Hello, world!`
 someChars   !chr `0123456789`
 
 MODIFIERS
@@ -83,7 +83,7 @@ and >. The + modifier adds a hexadecimal number to the value of a symbol
 or label. The < modifier gives the low byte of a 16-bit address; the >
 modifier gives the high byte:
 
-        jmp :my_address+1a  ; add 26 DEC to :my_address
+        jmp :my_address+1a  ; add $1a (26 decimal) to :my_address
         lda #<myLabel       ; put low byte of myLabel in accumulator
 
 Modifiers may not work with all predefined macros.

@@ -1,8 +1,11 @@
-;
+; ------------------------------------------------------------------------------
 ; Routines to collect string input and print strings on screen.
-; 650Vue demo by Dr. Myles Skinner.
+; 650Vue demo by Dr. Myles L. Skinner.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
-> fffc 00 c0 ; RESET vector
+@SetReset $c000
 
 :zp_last_key   = $0e  ; last key press
 :screen_row_lo = $a0  ; screen RAM low address table
@@ -278,7 +281,7 @@ loopClearScreen     sta $0fff,x
 ; input string from keyboard
 ; :string_ptr   - address of string to write
 ; :input_prompt - character for prompt
-; ;input_length - max characters
+; :input_length - max characters
 ; set :cursor_row and :cursor_col before calling
 ; ------------------------------------------------------------------------------
 inputWithPrompt     lda :input_prompt

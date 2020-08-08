@@ -1,9 +1,12 @@
-;
+; ------------------------------------------------------------------------------
 ; Oscillating sine wave.
-; A simple 650Vue demo by Dr. Myles Skinner.
+; A simple 650Vue demo by Dr. Myles L. Skinner.
 ;
 ; The sine wave is pre-calculated. Nothing fancy here.
 ; The program logic is also a bit tangled up but it works. :)
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
 @SetReset $c000
 

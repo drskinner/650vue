@@ -1,13 +1,15 @@
-;
+; ------------------------------------------------------------------------------
 ; Interrupt-driven timer program.
-; A simple 650Vue IRQ demo by Dr. Myles Skinner.
+; A simple 650Vue IRQ demo by Dr. Myles L. Skinner.
 ;
-; timer routine starts at $c000
-; interrupt service routine at $d000
-; timer reset at $b000
-
-; Timer runs on the IRQ synced to the
-; browser refresh rate (usually 60Hz).
+; * timer routine starts at $c000
+; * interrupt service routine at $d000
+; * timer reset at $b000
+;
+; Timer runs on the IRQ synced to the browser refresh rate (normally 60Hz).
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
 @SetReset $c000
 
@@ -32,9 +34,9 @@
 
 :ascii_zero = #$30
 
-; --------------------------------------
+; ------------------------------------------------------------------------------
 ; reset timer - g $b000 to reset
-; --------------------------------------
+; ------------------------------------------------------------------------------
 * = $b000
 reset   lda #0
         sta :tenths
@@ -50,15 +52,15 @@ reset   lda #0
         sta :screen+6
         brk
 
-; --------------------------------------
+; ------------------------------------------------------------------------------
 ; Main program start; set IRQ vector
-; --------------------------------------
+; ------------------------------------------------------------------------------
 * = $c000
         @SetIRQ   $d000
 
-; --------------------------------------
+; ------------------------------------------------------------------------------
 ; draw clock ad infinitum
-; --------------------------------------
+; ------------------------------------------------------------------------------
 draw    ldx #$06
 loop    lda :clock_base,x ; get clock "register"
         clc
@@ -68,10 +70,10 @@ loop    lda :clock_base,x ; get clock "register"
         bpl loop
         jmp draw
 
-; --------------------------------------
-; interrupt service routine
+; ------------------------------------------------------------------------------
+; interrupt service routine; increment timer registers
 ; preserves AC, XR; destroys YR
-; --------------------------------------
+; ------------------------------------------------------------------------------
 * = $d000
         pha
         ldy #0

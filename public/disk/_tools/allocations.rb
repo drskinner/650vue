@@ -4,6 +4,8 @@
 # The Allocations object takes the parsed source code and assigns each line to
 # a memory location, additionally building a lookup table of labels and memory
 # locations as it goes.
+#
+# Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 #------------------------------------------------------------------------------
 
 class Allocations

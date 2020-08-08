@@ -1,8 +1,11 @@
-;
+; ------------------------------------------------------------------------------
 ; Simple flashing cursor with arrow keys, enter, and delete.
 ; Keyboard scan lets you type on the video display.
 ;
-; Inspired by the Commodore kernal's full-screen editor.
+; Inspired by the Commodore Kernal's full-screen editor.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
 @SetReset $c000
 

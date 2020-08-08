@@ -3,7 +3,11 @@
 #
 # The Labels object substitutes labels for their target addresses, and applies
 # modifiers (<, >, or +) to labels and adjusts their values accordingly.
+#
+# Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 #------------------------------------------------------------------------------
+
+require './_tools/modifiers.rb'
 
 class Labels
   def initialize(labels, lines)
