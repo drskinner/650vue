@@ -32,9 +32,7 @@ class Assembler
     @source_lines = []
     @parsed_lines = []
     @object_lines = []
-    @symbols = {}
     @labels = {}
-    @address = 0
 
     if !ARGV[0]
       puts 'Usage: ruby asm.rb <filename>'
