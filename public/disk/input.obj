@@ -1,6 +1,9 @@
-;
+; ------------------------------------------------------------------------------
 ; Routines to collect string input and print strings on screen.
-; 650Vue demo by Dr. Myles Skinner.
+; 650Vue demo by Dr. Myles L. Skinner.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
 > fffc 00 c0 ; RESET vector
 
@@ -330,7 +333,7 @@
 ; input string from keyboard
 ; :string_ptr - address of string to write
 ; :input_prompt - character for prompt
-; ;input_length - max characters
+; :input_length - max characters
 ; set :cursor_row and :cursor_col before calling
 ; ------------------------------------------------------------------------------
 . c150 lda $e0

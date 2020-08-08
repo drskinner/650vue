@@ -1,6 +1,9 @@
-;
+; ------------------------------------------------------------------------------
 ; Screenful o' dots...
-; A simple 650Vue demo by Dr. Myles Skinner.
+; A simple 650Vue demo by Dr. Myles L. Skinner.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
 > fffc 00 c0 ; RESET vector
 
