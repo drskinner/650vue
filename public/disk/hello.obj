@@ -4,7 +4,6 @@
 
 > fffc 00 c0 ; RESET vector
 
-
 . c000 ldx #$00
 . c002 lda $c00f,x
 . c005 beq $c00e

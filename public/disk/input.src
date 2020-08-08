@@ -25,14 +25,8 @@
 :input_buffer   = $0200
 
 :plot_row       = $f0
-:plot_row_lo    = $f0
-:plot_row_hi    = $f1
 :read_row       = $f2
-:read_row_lo    = $f2
-:read_row_hi    = $f3
 :string_ptr     = $f4
-:string_ptr_lo  = $f4
-:string_ptr_hi  = $f5
 
 :xr_temp        = $fa
 :yr_temp        = $fb
@@ -63,50 +57,48 @@ string02      !str `Press any key to exit.`
 string03      !str `Done.`
 string04      !str `Hello, `
 string05      !str `, welcome to my input demo.`
-stringName    !res $09
+stringName    !res $09   ; reserve 9 bytes
               !chr `END OF STRINGS`
 ; the `END OF STRINGS` does nothing but if you look at memory from $2000,
 ; you can see how the strings and reserved bytes are laid out in memory.
+
+* = $e000
+#INCLUDE _lib/cursor_blink
 
 ; ------------------------------------------------------------------------------
 ; set IRQ vector to $e000
 ; ------------------------------------------------------------------------------
 * = $c000
-initialize  sei
-            lda #$00
-            sta $fffe ; vector low byte
-            lda #$e0
-            sta $ffff ; vector high byte
-            cli
+initialize  @setIRQ $e000
 
             lda #$00
             sta :cursor_row
             sta :cursor_col
             jsr clearScreen
 
-main        @setStr string01
+main        @setString string01
             jsr printString
 
-            @setStr stringName
+            @setString stringName
             jsr inputWithPrompt
             jsr doCarriageReturn
             jsr doCarriageReturn
 
-            @setStr string04
+            @setString string04
             jsr printString
-            @setStr stringName
+            @setString stringName
             jsr printString
-            @setStr string05
+            @setString string05
             jsr printStringWithCR
             jsr doCarriageReturn
 
-pressAnyKey @setStr string02
+pressAnyKey @setString string02
             jsr printString
             jsr doCarriageReturn
             jsr doCarriageReturn
 waitForKey  lda :zp_last_key
             beq waitForKey
-            @setStr string03
+            @setString string03
             jsr printString
             lda #$00
             sta :zp_last_key
@@ -175,16 +167,16 @@ doBackspace         lda #$00
 scrollScreen    ldx #$01              ; set XR to row 1
 startRowScroll  ldy #$31              ; set YR to col 49
 loopScrollChar  lda :screen_row_lo,x  ; find RAM address of position
-                sta :read_row_lo
+                sta :read_row
                 lda :screen_row_hi,x
-                sta :read_row_hi
+                sta :read_row+1
                 lda (:read_row),y ; read character at position
                 pha                   ; save character to stack
                 dex                   ; previous row
                 lda :screen_row_lo,x  ; find RAM address of new position
-                sta :plot_row_lo
+                sta :plot_row
                 lda :screen_row_hi,x
-                sta :plot_row_hi
+                sta :plot_row+1
                 pla                   ; get character back from stack
                 sta (:plot_row),y ; plot character
                 inx                   ; back to current row
@@ -211,9 +203,9 @@ plotCharAtCursor    pha
                     ldx :cursor_row
                     ldy :cursor_col
                     lda :screen_row_lo,x
-                    sta :plot_row_lo
+                    sta :plot_row
                     lda :screen_row_hi,x
-                    sta :plot_row_hi
+                    sta :plot_row+1
                     pla 
                     sta (:plot_row),y
                     rts
@@ -228,9 +220,9 @@ printCharAtCursor   pha
                     ldx :cursor_row
                     ldy :cursor_col
                     lda :screen_row_lo,x
-                    sta :plot_row_lo
+                    sta :plot_row
                     lda :screen_row_hi,x
-                    sta :plot_row_hi
+                    sta :plot_row+1
                     pla 
                     sta (:plot_row),y
                     jsr moveCursorRight
@@ -345,40 +337,3 @@ terminateString     sta (:string_ptr),y
 exitInput           sta :zp_last_key        ; clear last key (AC is already zero)
                     sta :blink_enabled      ; disable cursor blink
                     rts
-
-; ------------------------------------------------------------------------------
-; interrupt routine - flash cursor
-; preserves AC, XR, and YR
-; ------------------------------------------------------------------------------
-* = $e000
-irqService  pha                   ; stash registers
-            txa
-            pha
-            tya
-            pha
-
-            lda :blink_enabled    ; 0 == blink off
-            beq exitIRQ           ; exit if blink off
-            dec :blink_counter    ; decrease countdown
-            bne exitIRQ           ; exit if not zero
-            lda #$14              ; reload countdown
-            sta :blink_counter
-            lda :blink_state      ; toggle blink state
-            eor #$01
-            sta :blink_state
-            ldx :cursor_row       ; get row base screen address
-            lda :screen_row_lo,x  ; into zero page :plot_row
-            sta :plot_row_lo
-            lda :screen_row_hi,x
-            sta :plot_row_hi
-            ldy :cursor_col
-            lda (:plot_row),y ; get cursor RAM address
-            eor #$80              ; toggle inverse video
-            sta (:plot_row),y ; write new char to screen
-
-exitIRQ     pla                   ; restore registers
-            tay
-            pla
-            tax
-            pla
-            rti

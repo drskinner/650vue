@@ -2,16 +2,15 @@
 ; "Hello, world!"
 ; A simple 650Vue demo by Dr. Myles Skinner.
 
-> fffc 00 c0 ; RESET vector
-
+@SetReset $c000
 :screen = $1000
-* = $c000
 
+* = $c000
         ldx #$00
 loop    lda string,x
         beq exit
         sta :screen,x
-        inx 
+        inx
         jmp loop
 exit    brk
 

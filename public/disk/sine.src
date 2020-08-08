@@ -5,31 +5,18 @@
 ; The sine wave is pre-calculated. Nothing fancy here.
 ; The program logic is also a bit tangled up but it works. :)
 
-> fffc 00 c0 ; RESET vector
+@SetReset $c000
 
-:screen_row_lo = $a0  ; screen RAM low address table
-:screen_row_hi = $b4  ; screen RAM high address table
-
+:screen_row_lo = $a0    ; screen RAM low address table
+:screen_row_hi = $b4    ; screen RAM high address table
 :row_10_base   = $11f4
 
 :plot_row      = $fe
-:plot_row_lo   = $fe
-:plot_row_hi   = $ff
-
 :pointer       = $fc
-:pointer_lo    = $fc
-:pointer_hi    = $fd
+
 > 00fc 40 00
 
 ; some handy constants
-:DEC_19 = #$13
-:DEC_20 = #$14
-:DEC_23 = #$17
-:DEC_24 = #$18
-:DEC_48 = #$30
-:DEC_49 = #$31
-:DEC_52 = #$34
-
 :space = #$20
 :dash  = #$2d
 :star  = #$2a
@@ -50,7 +37,7 @@
 > 00c4 13 13 13 13
 
 ; ------------------------------------------------------------------------------
-; Screen RAM high bytes
+; Pre-calculated sine vertical plot points
 ; ------------------------------------------------------------------------------
 > 0040 09 0b 0e 10 12 13 13 13
 > 0048 13 12 10 0e 0b 09 06 04
@@ -66,11 +53,11 @@
 > 008c 04 06 09
 
 ; ------------------------------------------------------------------------------
-
+; Main program
 ; ------------------------------------------------------------------------------
 * = $c000
                 lda :dash           ; draw X axis
-                ldy :DEC_49
+                ldy #49
 loopHorizontal  sta :row_10_base,y
                 dey
                 bpl loopHorizontal
@@ -79,14 +66,14 @@ resetPointer    lda #$40            ; begin full cycle anew
                 sta :pointer    
 
 mainLoop        lda :pipe           ; draw Y axis
-                ldy :DEC_24
-                ldx :DEC_19
+                ldy #24
+                ldx #19
 loopVertical    jsr plotChar
                 dex
                 bpl loopVertical
 
                 lda :star           ; draw sine curve
-                ldy :DEC_49
+                ldy #49
 loopCurve       pha
                 lda (:pointer),y
                 tax
@@ -125,7 +112,7 @@ moveStars       lda (:pointer),y
                 jmp moveStars
 
 ; replace pipe that we erased when the star vacated
-replacePipe     ldy :DEC_23       ; one left of center
+replacePipe     ldy #23           ; one left of center
                 lda (:pointer),y
                 tax
                 lda :pipe
@@ -139,9 +126,9 @@ replacePipe     ldy :DEC_23       ; one left of center
 ; ------------------------------------------------------------------------------
 plotChar    pha
             lda :screen_row_lo,x
-            sta :plot_row_lo
+            sta :plot_row
             lda :screen_row_hi,x
-            sta :plot_row_hi
+            sta :plot_row+1
             pla
             sta (:plot_row),y
             rts

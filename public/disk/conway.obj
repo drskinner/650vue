@@ -6,7 +6,7 @@
 ; code to save a few cycles, but this program runs comfortably at
 ; 600kHz without delay loops so I find the tradeoff acceptable.
 
-> fffc 00 c0       ; reset vector
+> fffc 00 c0 ; RESET vector
 
 ; ------------------------------------------------------------------------------
 ; Title Screen
@@ -84,8 +84,6 @@
 > 00c4 13 13 13 13
 
 
-
-; some handy constants
 
 ; ------------------------------------------------------------------------------
 ; Populate screen RAM with random cells
@@ -246,9 +244,9 @@
 ; Update screen. Now that we have neighbours calculated and stored in the
 ; scratch area of RAM ($2000), apply the rules and redraw screen RAM directly.
 ; The Conway rules reduce to 3 conditions:
-;   * 2 neighbours: leave unchanged,
-;   * 3 neighbours: always populate, and
-;   * everything else dies. Nature is brutal.
+; * 2 neighbours: leave unchanged,
+; * 3 neighbours: always populate, and
+; * everything else dies. Nature is brutal.
 ; ------------------------------------------------------------------------------
 . c0d7 ldx #$13
 . c0d9 ldy #$31

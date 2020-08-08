@@ -2,11 +2,10 @@
 ; Screenful o' dots...
 ; A simple 650Vue demo by Dr. Myles Skinner.
 
-> fffc 00 c0 ; RESET vector
-
+@SetReset $c000
 :dot = #$2e
-* = $c000
 
+* = $c000
         lda :dot
         ldx #$fa
 loop    sta $0fff,x
