@@ -1,0 +1,118 @@
+650Vue Assembler - Supported Syntax
+
+COMMENTS
+
+Comments start with a semicolon, and can be placed either at the
+beginning of a line, or after an instruction:
+
+; full-line comment
+        lda #$40 ; comment after instruction
+
+CONSTANTS
+
+The 650Vue assembler supports 8-bit binary, 8-bit decimal, and
+both 8- and 16-bit hexadecimal numbers. The following instructions
+are equivalent:
+
+        lda #%0010_1000 ; binary number with % prefix
+                        ; must have _ nybble separator
+        lda #42         ; decimal number (no prefix)
+        lda #$2a        ; hexadecimal number with $ prefix
+
+SET ADDRESS FOR ASSEMBLY
+
+The * directive allows you to set the target memory location:
+
+* = $c000 ; next instruction will begin at $c000
+
+STATIC MEMORY ALLOCATION
+
+You can assign bytes (in hex) directly to memory with the > directive:
+
+> c000 01 02 03 04
+
+DYNAMIC MEMORY ALLOCATION
+
+You can define blocks of characters (!chr) or C-style null-terminated
+strings (!str), or reserve a block of memory (!res), filling the specified
+number of bytes with zeroes. There must be at least one space in front of
+the ! character:
+
+              !str `This string is null-terminated.`
+              !chr `This block of chars is not.`
+              !res $09  ; reserve 9 bytes
+
+SYMBOLS
+
+A symbol starts with a colon, and by convention, is written in snake_case.
+Symbols can represent constants or addresses. All symbols are global and thus
+each must have a unique name. To define a symbol, place the symbol flush left,
+followed by an equal sign, and then the value to be assigned:
+
+:my_symbol  = #$41
+:my_address = $ffd2
+
+Once defined, you can use symbols in place of operands in instructions:
+
+        lda :my_symbol     ; equivalent to lda #$41
+        jsr :my_address    ; equivalent to jsr $ffd2
+
+LABELS
+
+A label identifies an address, and by convention, is written in camelCase.
+Like symbols, labels are global. To define a label, place the label flush
+left. You can attach a label to an instruction or place a label before a
+dynamic memory allocation directive. The assembler will determine the label's
+target address during assembly:
+
+* = $c000
+myLoop      lda #$00      ; myLoop will be assigned $c000
+            jmp myLoop    ; equivalent to jmp $c000
+someString  !str `Hello, world!`
+
+; someString will be assigned $c005, because there have been
+; 5 bytes since myLoop ($c000). someChars will point to the
+; memory location of the `0` in `0123456789`:
+
+someChars   !chr `0123456789`
+
+MODIFIERS
+
+Symbols and labels can have their values modified by the symbols +, <,
+and >. The + modifier adds a hexadecimal number to the value of a symbol
+or label. The < modifier gives the low byte of a 16-bit address; the >
+modifier gives the high byte:
+
+        jmp :my_address+1a  ; add $1a (26 decimal) to :my_address
+        lda #<myLabel       ; put low byte of myLabel in accumulator
+
+Modifiers may not work with all predefined macros.
+
+MACROS
+
+Macros encapsulate repeated lines of source code, and by convention, are
+named in @PascalCase and must start with the `@` character. The assembler
+performs substitutions for any macros it finds. Macros must resolve to a 
+Ruby method in the macros.rb file; the 650Vue assembler does not support
+dynamically-defined macros at this time.
+
+; the following line:
+initialize @setIRQ $ea31
+
+; becomes:
+initialize  sei
+            lda #$31
+            sta $fffe
+            lda #$ea
+            sta $ffff
+            cli
+
+EXTERNAL LIBRARY SUBROUTINES
+
+You can include external files into the main source file with the #INCLUDE
+directive, which must be placed flush left, followed by a relative file path.
+If the external file contains relocatable code, you can set the assembly
+address with the * directive before the #INCLUDE:
+
+* = $d000  ; place relocatable code at $d000
+#INCLUDE _lib/kernal.src

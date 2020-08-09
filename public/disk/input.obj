@@ -1,6 +1,9 @@
-;
+; ------------------------------------------------------------------------------
 ; Routines to collect string input and print strings on screen.
-; 650Vue demo by Dr. Myles Skinner.
+; 650Vue demo by Dr. Myles L. Skinner.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
 > fffc 00 c0 ; RESET vector
 
@@ -36,19 +39,61 @@
 > 2020 74 65 72 73 29 00
 > 2026 50 72 65 73 73 20 61 6E
 > 202e 79 20 6B 65 79 20 74 6F
-> 2036 20 63 6F 6E 74 69 6E 75
-> 203e 65 2E 00
-> 2041 45 78 69 74 69 6E 67 2E
-> 2049 00
-> 204a 48 65 6C 6C 6F 2C 20 00
-> 2052 2C 20 77 65 6C 63 6F 6D
-> 205a 65 20 74 6F 20 6D 79 20
-> 2062 69 6E 70 75 74 20 64 65
-> 206a 6D 6F 2E 00
-> 206e 00 00 00 00 00 00 00 00
-> 2076 00
-> 2077 45 4E 44 20 4F 46 20 53
-> 207f 54 52 49 4E 47 53
+> 2036 20 65 78 69 74 2E 00
+> 203d 44 6F 6E 65 2E 00
+> 2043 48 65 6C 6C 6F 2C 20 00
+> 204b 2C 20 77 65 6C 63 6F 6D
+> 2053 65 20 74 6F 20 6D 79 20
+> 205b 69 6E 70 75 74 20 64 65
+> 2063 6D 6F 2E 00
+> 2067 00 00 00 00 00 00 00 00
+> 206f 00
+> 2070 45 4E 44 20 4F 46 20 53
+> 2078 54 52 49 4E 47 53
+; the `END OF STRINGS` does nothing but if you look at memory from $2000,
+; you can see how the strings and reserved bytes are laid out in memory.
+
+;
+; Cursor Blink IRQ routine
+; 650Vue by Dr. Myles Skinner.
+;
+; Relocatable - specify address before #INCLUDE
+
+; ------------------------------------------------------------------------------
+; interrupt routine - flash cursor
+; preserves AC, XR, and YR
+; ------------------------------------------------------------------------------
+. e000 pha
+. e001 txa
+. e002 pha
+. e003 tya
+. e004 pha
+
+. e005 lda $cc
+. e007 beq $e029
+. e009 dec $cd
+. e00b bne $e029
+. e00d lda #$14
+. e00f sta $cd
+. e011 lda $cf
+. e013 eor #$01
+. e015 sta $cf
+. e017 ldx $ca
+. e019 lda $a0,x
+. e01b sta $f0
+. e01d lda $b4,x
+. e01f sta $f1
+. e021 ldy $cb
+. e023 lda ($f0),y
+. e025 eor #$80
+. e027 sta ($f0),y
+
+. e029 pla
+. e02a tay
+. e02b pla
+. e02c tax
+. e02d pla
+. e02e rti
 
 ; ------------------------------------------------------------------------------
 ; set IRQ vector to $e000
@@ -65,15 +110,13 @@
 . c010 sta $cb
 . c012 jsr $c13c
 
-; and make a macro out of setting string pointer
-
 . c015 lda #$00
 . c017 sta $f4
 . c019 lda #$20
 . c01b sta $f5
 . c01d jsr $c10f
 
-. c020 lda #$6e
+. c020 lda #$67
 . c022 sta $f4
 . c024 lda #$20
 . c026 sta $f5
@@ -81,17 +124,17 @@
 . c02b jsr $c0a6
 . c02e jsr $c0a6
 
-. c031 lda #$4a
+. c031 lda #$43
 . c033 sta $f4
 . c035 lda #$20
 . c037 sta $f5
 . c039 jsr $c10f
-. c03c lda #$6e
+. c03c lda #$67
 . c03e sta $f4
 . c040 lda #$20
 . c042 sta $f5
 . c044 jsr $c10f
-. c047 lda #$52
+. c047 lda #$4b
 . c049 sta $f4
 . c04b lda #$20
 . c04d sta $f5
@@ -107,7 +150,7 @@
 . c063 jsr $c0a6
 . c066 lda $0e
 . c068 beq $c066
-. c06a lda #$41
+. c06a lda #$3d
 . c06c sta $f4
 . c06e lda #$20
 . c070 sta $f5
@@ -290,7 +333,7 @@
 ; input string from keyboard
 ; :string_ptr - address of string to write
 ; :input_prompt - character for prompt
-; ;input_length - max characters
+; :input_length - max characters
 ; set :cursor_row and :cursor_col before calling
 ; ------------------------------------------------------------------------------
 . c150 lda $e0
@@ -349,39 +392,3 @@
 . c1b9 sta $0e
 . c1bb sta $cc
 . c1bd rts
-
-; ------------------------------------------------------------------------------
-; interrupt routine - flash cursor
-; preserves AC, XR, and YR
-; ------------------------------------------------------------------------------
-. e000 pha
-. e001 txa
-. e002 pha
-. e003 tya
-. e004 pha
-
-. e005 lda $cc
-. e007 beq $e029
-. e009 dec $cd
-. e00b bne $e029
-. e00d lda #$14
-. e00f sta $cd
-. e011 lda $cf
-. e013 eor #$01
-. e015 sta $cf
-. e017 ldx $ca
-. e019 lda $a0,x
-. e01b sta $f0
-. e01d lda $b4,x
-. e01f sta $f1
-. e021 ldy $cb
-. e023 lda ($f0),y
-. e025 eor #$80
-. e027 sta ($f0),y
-
-. e029 pla
-. e02a tay
-. e02b pla
-. e02c tax
-. e02d pla
-. e02e rti

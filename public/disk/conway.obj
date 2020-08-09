@@ -1,12 +1,16 @@
+; ------------------------------------------------------------------------------
 ; John Conway's "Game of Life" cellular automaton.
-; 650Vue version by Dr. Myles Skinner.
+; 650Vue version by Dr. Myles L. Skinner.
 ;
 ; This 6502 version is inefficient but uses subroutines to make the
 ; structure more clear. I could replace every JSR/RTS with inline
 ; code to save a few cycles, but this program runs comfortably at
 ; 600kHz without delay loops so I find the tradeoff acceptable.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
-> fffc 00 c0       ; reset vector
+> fffc 00 c0 ; RESET vector
 
 ; ------------------------------------------------------------------------------
 ; Title Screen
@@ -84,8 +88,6 @@
 > 00c4 13 13 13 13
 
 
-
-; some handy constants
 
 ; ------------------------------------------------------------------------------
 ; Populate screen RAM with random cells
@@ -185,7 +187,7 @@
 . c087 jmp $c09b
 
 ; ------------------------------------------------------------------------------
-; Count row below cell. Sets the pointers for the row above the cell's position
+; Count row below cell. Sets the pointers for the row below the cell's position
 ; and continues on to $c09b.
 ; ------------------------------------------------------------------------------
 ;
@@ -246,9 +248,9 @@
 ; Update screen. Now that we have neighbours calculated and stored in the
 ; scratch area of RAM ($2000), apply the rules and redraw screen RAM directly.
 ; The Conway rules reduce to 3 conditions:
-;   * 2 neighbours: leave unchanged,
-;   * 3 neighbours: always populate, and
-;   * everything else dies. Nature is brutal.
+; * 2 neighbours: leave unchanged,
+; * 3 neighbours: always populate, and
+; * everything else dies. Nature is brutal.
 ; ------------------------------------------------------------------------------
 . c0d7 ldx #$13
 . c0d9 ldy #$31

@@ -1,9 +1,11 @@
-;
+; ------------------------------------------------------------------------------
 ; "Hello, world!"
-; A simple 650Vue demo by Dr. Myles Skinner.
+; A simple 650Vue demo by Dr. Myles L. Skinner.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
 > fffc 00 c0 ; RESET vector
-
 
 . c000 ldx #$00
 . c002 lda $c00f,x

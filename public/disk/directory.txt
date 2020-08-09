@@ -2,5 +2,6 @@ conway - Conway's Game of Life
 cursor - Cursor and keyboard input demo
 dots   - Fill the screen with dots
 hello  - Classic "Hello, world!"
+input  - String handling demo
 sine   - Sine wave animation demo
 timer  - Interrupt-driven timer

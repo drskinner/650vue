@@ -1,10 +1,13 @@
-;
+; ------------------------------------------------------------------------------
 ; Simple flashing cursor with arrow keys, enter, and delete.
 ; Keyboard scan lets you type on the video display.
 ;
-; Inspired by the Commodore kernal's full-screen editor.
+; Inspired by the Commodore Kernal's full-screen editor.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
-> fffc 00 c0          ; reset vector
+@SetReset $c000
 
 :zp_last_key   = $0e  ; last key press
 :screen_row_lo = $a0  ; screen RAM low address table
@@ -22,11 +25,7 @@
 > 00cd 14             ; cursor timer
 
 :plot_row    = $f0
-:plot_row_lo = $f0
-:plot_row_hi = $f1
 :read_row    = $f2
-:read_row_lo = $f2
-:read_row_hi = $f3
 
 ; set ASCII character values for control characters
 :arrow_down  = #$1e
@@ -58,12 +57,7 @@
 ; set IRQ vector to $e000
 ; ------------------------------------------------------------------------------
 * = $c000
-initialize  sei
-            lda #$00
-            sta $fffe ; vector low byte
-            lda #$e0
-            sta $ffff ; vector high byte
-            cli
+initialize  @SetIRQ $e000
 
 ; ------------------------------------------------------------------------------
 ; main loop: read key, process, repeat
@@ -161,9 +155,9 @@ plotCharAtCursor    pha
                     ldx :cursor_row
                     ldy :cursor_col
                     lda :screen_row_lo,x
-                    sta :plot_row_lo
+                    sta :plot_row
                     lda :screen_row_hi,x
-                    sta :plot_row_hi
+                    sta :plot_row+1
                     pla 
                     sta (:plot_row),y
                     rts
@@ -176,9 +170,9 @@ plotCharAtCursor    pha
 setCharUnderCursor  ldx :cursor_row
                     ldy :cursor_col
                     lda :screen_row_lo,x
-                    sta :plot_row_lo
+                    sta :plot_row
                     lda :screen_row_hi,x
-                    sta :plot_row_hi
+                    sta :plot_row+1
                     lda (:plot_row),y
                     sta :cursor_char
                     rts
@@ -251,9 +245,9 @@ pullNextChar        iny                   ; go one past
                     cpy #$32              ; off-screen?
                     beq endDelete         ; yes? finish routine
                     lda :screen_row_lo,x  ; find RAM address of position
-                    sta :read_row_lo
+                    sta :read_row
                     lda :screen_row_hi,x
-                    sta :read_row_hi
+                    sta :read_row+1
                     lda (:read_row),y ; read character at position
                     dey
                     sta (:read_row),y
@@ -276,16 +270,16 @@ exitDelete          sta :cursor_char
 scrollScreen    ldx #$01              ; set XR to row 1
 startRowScroll  ldy #$31              ; set YR to col 49
 loopScrollChar  lda :screen_row_lo,x  ; find RAM address of position
-                sta :read_row_lo
+                sta :read_row
                 lda :screen_row_hi,x
-                sta :read_row_hi
+                sta :read_row+1
                 lda (:read_row),y ; read character at position
                 pha                   ; save character to stack
                 dex                   ; previous row
                 lda :screen_row_lo,x  ; find RAM address of new position
-                sta :plot_row_lo
+                sta :plot_row
                 lda :screen_row_hi,x
-                sta :plot_row_hi
+                sta :plot_row+1
                 pla                   ; get character back from stack
                 sta (:plot_row),y ; plot character
                 inx                   ; back to current row
@@ -324,9 +318,9 @@ irqService  pha                   ; stash registers
             sta :blink_state
             ldx :cursor_row       ; get row base screen address
             lda :screen_row_lo,x  ; into zero page :plot_row
-            sta :plot_row_lo
+            sta :plot_row
             lda :screen_row_hi,x
-            sta :plot_row_hi
+            sta :plot_row+1
             ldy :cursor_col
             lda (:plot_row),y ; get cursor RAM address
             eor #$80              ; toggle inverse video

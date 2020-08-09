@@ -1,12 +1,16 @@
+; ------------------------------------------------------------------------------
 ; John Conway's "Game of Life" cellular automaton.
-; 650Vue version by Dr. Myles Skinner.
+; 650Vue version by Dr. Myles L. Skinner.
 ;
 ; This 6502 version is inefficient but uses subroutines to make the
 ; structure more clear. I could replace every JSR/RTS with inline
 ; code to save a few cycles, but this program runs comfortably at
 ; 600kHz without delay loops so I find the tradeoff acceptable.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
-> fffc 00 c0       ; reset vector
+@SetReset $c000
 
 ; ------------------------------------------------------------------------------
 ; Title Screen
@@ -47,21 +51,11 @@
 :neighbours    = $f9
 :xr_temp       = $fa
 :yr_temp       = $fb
-:plot_row      = $fc
-:plot_row_lo   = $fc  ; row for plotting cells
-:plot_row_hi   = $fd
-:scan_row      = $fe
-:scan_row_lo   = $fe  ; row to scan for neighbours
-:scan_row_hi   = $ff
+:plot_row      = $fc  ; row for plotting cells $fc/$fd
+:scan_row      = $fe  ; row to scan for neighbours $fe/$ff
 
 :empty_cell  = #$20
 :live_cell   = #$4f
-
-; some handy constants
-:DEC_19 = #$13
-:DEC_20 = #$14
-:DEC_49 = #$31
-:DEC_50 = #$32
 
 ; ------------------------------------------------------------------------------
 ; Populate screen RAM with random cells
@@ -86,8 +80,8 @@ populateLoop  jsr randomCell  ; put random cell value in AC
 ; X-register: screen row (vertical position)
 ; Y-register: screen column (horizontal position)
 ; ------------------------------------------------------------------------------
-mainLoop      ldx :DEC_19         ; 20 rows (0-19)
-newRow        ldy :DEC_49         ; 50 columns (0-49)
+mainLoop      ldx #19             ; 20 rows (0-19)
+newRow        ldy #49             ; 50 columns (0-49)
 doCount       jsr countNeighbours
               dey
               bpl doCount
@@ -99,8 +93,8 @@ doCount       jsr countNeighbours
 ; ------------------------------------------------------------------------------
 ; Randomly select a single cell's status
 ; ------------------------------------------------------------------------------
-randomCell    lda :zp_random   ; random number
-              cmp #$40         ; probability of live cell
+randomCell    lda :zp_random      ; random number
+              cmp #$40            ; probability of live cell
               bcs emptyCell
               lda :live_cell
               rts
@@ -125,22 +119,22 @@ countNeighbours   lda #$00
 ; ------------------------------------------------------------------------------
 countHorizontal sty :yr_temp          ; save YR
                 lda :screen_row_lo,x  ; set up pointer to scan row
-                sta :scan_row_lo
+                sta :scan_row
                 lda :screen_row_hi,x
-                sta :scan_row_hi
+                sta :scan_row+1
                 dey                   ; move left
                 bpl lookLeft          ; negative == left overflow
-                ldy :DEC_49           ; rightmost column
-lookLeft        lda (:scan_row_lo),y  ; look at cell to the left
+                ldy #49               ; rightmost column
+lookLeft        lda (:scan_row),y  ; look at cell to the left
                 cmp :empty_cell
                 beq reloadYR1
                 inc :neighbours
 reloadYR1       ldy :yr_temp
                 iny                   ; move right
-                cpy :DEC_50           ; right overflow?
+                cpy #50               ; right overflow?
                 bne lookRight
                 ldy #$00              ; leftmost column
-lookRight       lda (:scan_row_lo),y  ; cell to the right
+lookRight       lda (:scan_row),y     ; cell to the right
                 cmp :empty_cell
                 beq reloadYR2
                 inc :neighbours
@@ -154,15 +148,15 @@ reloadYR2       ldy :yr_temp
 countRowAbove   stx :xr_temp
                 dex                   ; one row above
                 bpl validRowAbove     ; #$ff is above top row
-                ldx :DEC_19           ; set to bottom row
+                ldx #19               ; set to bottom row
 validRowAbove   lda :screen_row_lo,x  ; set up pointer to scan row
-                sta :scan_row_lo
+                sta :scan_row
                 lda :screen_row_hi,x
-                sta :scan_row_hi
+                sta :scan_row+1
                 jmp countRow          ; countRow will handle the RTS
 
 ; ------------------------------------------------------------------------------
-; Count row below cell. Sets the pointers for the row above the cell's position
+; Count row below cell. Sets the pointers for the row below the cell's position
 ; and continues on to countRow.
 ; ------------------------------------------------------------------------------
 ;
@@ -170,36 +164,36 @@ validRowAbove   lda :screen_row_lo,x  ; set up pointer to scan row
 ;
 countRowBelow   stx :xr_temp
                 inx                   ; one row below
-                cpx :DEC_20           ; row 20 is past the bottom
+                cpx #20               ; row 20 is past the bottom
                 bne validRowBelow
                 ldx #$00              ; set to top row
 validRowBelow   lda :screen_row_lo,x  ; set up pointer to scan row
-                sta :scan_row_lo
+                sta :scan_row
                 lda :screen_row_hi,x
-                sta :scan_row_hi
+                sta :scan_row+1
 
 ; ------------------------------------------------------------------------------
 ; Count three neighbours in the row pointed to by :scan_row. We JMP in here,
 ; so this subroutine must restore XR, YR and handle the RTS.
 ; ------------------------------------------------------------------------------
 countRow          sty :yr_temp
-                  lda (:scan_row_lo),y  ; direct vertical adjacency
+                  lda (:scan_row),y     ; direct vertical adjacency
                   cmp :empty_cell
                   beq setDiagonalLeft   ; empty: skip ahead
                   inc :neighbours
 setDiagonalLeft   dey                   ; go to the left
                   bpl checkLeft         ; negative is left underflow
-                  ldy :DEC_49           ; rightmost column
-checkLeft         lda (:scan_row_lo),y  ; get diagonal left
+                  ldy #49               ; rightmost column
+checkLeft         lda (:scan_row),y     ; get diagonal left
                   cmp :empty_cell
                   beq setDiagonalRight
                   inc :neighbours
 setDiagonalRight  ldy :yr_temp
                   iny                   ; go to the right
-                  cpy :DEC_50           ; right overflow
+                  cpy #50               ; right overflow
                   bne checkRight
                   ldy #$00              ; leftmost column
-checkRight        lda (:scan_row_lo),y  ; get diagonal right
+checkRight        lda (:scan_row),y     ; get diagonal right
                   cmp :empty_cell
                   beq exitCountRow
                   inc :neighbours
@@ -211,12 +205,12 @@ exitCountRow      ldx :xr_temp          ; restore registers before RTS
 ; Store neighbour count in scratch area
 ; ------------------------------------------------------------------------------
 writeCount  lda :screen_row_lo,x  ; set up pointer to plot row
-            sta :plot_row_lo
+            sta :plot_row
             lda :screen_row_hi,x
             eor #$30              ; switch to scratch area
-            sta :plot_row_hi
+            sta :plot_row+1
             lda :neighbours
-            sta (:plot_row_lo),y  ; store in scratch
+            sta (:plot_row),y     ; store in scratch
             rts
 
 ; ------------------------------------------------------------------------------
@@ -227,16 +221,16 @@ writeCount  lda :screen_row_lo,x  ; set up pointer to plot row
 ;   * 3 neighbours: always populate, and
 ;   * everything else dies. Nature is brutal.
 ; ------------------------------------------------------------------------------
-updateScreen  ldx :DEC_19           ; 20 rows (0-19)
-nextRow       ldy :DEC_49           ; 50 columns (0-49)
+updateScreen  ldx #19               ; 20 rows (0-19)
+nextRow       ldy #49               ; 50 columns (0-49)
 updateCell    lda :screen_row_lo,x  ; set pointers to screen and scratch RAM
-              sta :plot_row_lo
-              sta :scan_row_lo
+              sta :plot_row
+              sta :scan_row
               lda :screen_row_hi,x
-              sta :plot_row_hi
+              sta :plot_row+1
               clc
               adc #$10              ; switch to scratch
-              sta :scan_row_hi
+              sta :scan_row+1
               lda (:scan_row),y
               cmp #$03              ; 3 neighbours? draw live cell
               bne testStasis        ; otherwise, check for "no change"

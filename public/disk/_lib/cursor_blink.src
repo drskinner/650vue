@@ -1,0 +1,41 @@
+;
+; Cursor Blink IRQ routine
+; 650Vue by Dr. Myles Skinner.
+;
+; Relocatable - specify address before #INCLUDE
+
+; ------------------------------------------------------------------------------
+; interrupt routine - flash cursor
+; preserves AC, XR, and YR
+; ------------------------------------------------------------------------------
+irqService  pha                   ; stash registers
+            txa
+            pha
+            tya
+            pha
+
+            lda :blink_enabled    ; 0 == blink off
+            beq exitIRQ           ; exit if blink off
+            dec :blink_counter    ; decrease countdown
+            bne exitIRQ           ; exit if not zero
+            lda #$14              ; reload countdown
+            sta :blink_counter
+            lda :blink_state      ; toggle blink state
+            eor #$01
+            sta :blink_state
+            ldx :cursor_row       ; get row base screen address
+            lda :screen_row_lo,x  ; into zero page :plot_row
+            sta :plot_row
+            lda :screen_row_hi,x
+            sta :plot_row+1
+            ldy :cursor_col
+            lda (:plot_row),y ; get cursor RAM address
+            eor #$80              ; toggle inverse video
+            sta (:plot_row),y ; write new char to screen
+
+exitIRQ     pla                   ; restore registers
+            tay
+            pla
+            tax
+            pla
+            rti

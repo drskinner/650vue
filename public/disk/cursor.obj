@@ -1,16 +1,19 @@
-;
+; ------------------------------------------------------------------------------
 ; Simple flashing cursor with arrow keys, enter, and delete.
 ; Keyboard scan lets you type on the video display.
 ;
-; Inspired by the Commodore kernal's full-screen editor.
+; Inspired by the Commodore Kernal's full-screen editor.
+;
+; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
+; ------------------------------------------------------------------------------
 
-> fffc 00 c0          ; reset vector
+> fffc 00 c0 ; RESET vector
 
 
 
-> 00ca 00 00          ; cursor at "home" position
-> 00cc 01             ; blink on
-> 00cd 14             ; cursor timer
+> 00ca 00 00 ; cursor at "home" position
+> 00cc 01 ; blink on
+> 00cd 14 ; cursor timer
 
 
 ; set ASCII character values for control characters
@@ -168,7 +171,7 @@
 
 ; ------------------------------------------------------------------------------
 ; Move cursor right. If we go off the right edge, then we're on the next line.
-; Beacuse we have advanced one line, cursor right dovetails with cursor down. 
+; Beacuse we have advanced one line, cursor right dovetails with cursor down.
 ; ------------------------------------------------------------------------------
 . d029 inc $cb
 . d02b lda #$32
