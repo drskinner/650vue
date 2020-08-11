@@ -108,145 +108,145 @@
 . c00c lda #$00
 . c00e sta $ca
 . c010 sta $cb
-. c012 jsr $c13c
+. c012 jsr $c136
 
 . c015 lda #$00
 . c017 sta $f4
 . c019 lda #$20
 . c01b sta $f5
-. c01d jsr $c10f
+. c01d jsr $c10c
 
 . c020 lda #$67
 . c022 sta $f4
 . c024 lda #$20
 . c026 sta $f5
-. c028 jsr $c150
-. c02b jsr $c0a6
-. c02e jsr $c0a6
+. c028 jsr $c14a
+. c02b jsr $c0a3
+. c02e jsr $c0a3
 
 . c031 lda #$43
 . c033 sta $f4
 . c035 lda #$20
 . c037 sta $f5
-. c039 jsr $c10f
+. c039 jsr $c10c
 . c03c lda #$67
 . c03e sta $f4
 . c040 lda #$20
 . c042 sta $f5
-. c044 jsr $c10f
+. c044 jsr $c10c
 . c047 lda #$4b
 . c049 sta $f4
 . c04b lda #$20
 . c04d sta $f5
-. c04f jsr $c124
-. c052 jsr $c0a6
+. c04f jsr $c11e
+;            jsr $c0a3
 
-. c055 lda #$26
-. c057 sta $f4
-. c059 lda #$20
-. c05b sta $f5
-. c05d jsr $c10f
-. c060 jsr $c0a6
-. c063 jsr $c0a6
-. c066 lda $0e
-. c068 beq $c066
-. c06a lda #$3d
-. c06c sta $f4
-. c06e lda #$20
-. c070 sta $f5
-. c072 jsr $c10f
-. c075 lda #$00
-. c077 sta $0e
-. c079 brk
+. c052 lda #$26
+. c054 sta $f4
+. c056 lda #$20
+. c058 sta $f5
+. c05a jsr $c10c
+. c05d jsr $c0a3
+. c060 jsr $c0a3
+. c063 lda $0e
+. c065 beq $c063
+. c067 lda #$3d
+. c069 sta $f4
+. c06b lda #$20
+. c06d sta $f5
+. c06f jsr $c10c
+. c072 lda #$00
+. c074 sta $0e
+. c076 brk
 
 ; ------------------------------------------------------------------------------
 ; Move cursor right. If we go off the right edge, then we're on the next line.
 ; Beacuse we have advanced one line, cursor right dovetails with cursor down.
 ; ------------------------------------------------------------------------------
-. c07a inc $cb
-. c07c lda #$32
-. c07e cmp $cb
-. c080 bne $c093
-. c082 lda #$00
-. c084 sta $cb
+. c077 inc $cb
+. c079 lda #$32
+. c07b cmp $cb
+. c07d bne $c090
+. c07f lda #$00
+. c081 sta $cb
 ; ------------------------------------------------------------------------------
 ; entry point for cursor down
 ; ------------------------------------------------------------------------------
-. c086 inc $ca
-. c088 lda #$14
-. c08a cmp $ca
-. c08c bne $c093
-. c08e dec $ca
-. c090 jsr $c0ba
-. c093 rts
+. c083 inc $ca
+. c085 lda #$14
+. c087 cmp $ca
+. c089 bne $c090
+. c08b dec $ca
+. c08d jsr $c0b7
+. c090 rts
 
 ; ------------------------------------------------------------------------------
 ; Move cursor left. If we go off the left edge, then we're on the previous line.
 ; Can't go any higher than the top line; in this situation, the cursor column
 ; has rolled over to $ff, so we need to correct its position.
 ; ------------------------------------------------------------------------------
-. c094 dec $cb
-. c096 bpl $c0a2
-. c098 lda $ca
-. c09a beq $c0a3
-. c09c lda #$31
-. c09e sta $cb
-. c0a0 dec $ca
+. c091 dec $cb
+. c093 bpl $c09f
+. c095 lda $ca
+. c097 beq $c0a0
+. c099 lda #$31
+. c09b sta $cb
+. c09d dec $ca
+. c09f rts
+. c0a0 inc $cb
 . c0a2 rts
-. c0a3 inc $cb
-. c0a5 rts
 
 ; ------------------------------------------------------------------------------
 ; Execute carriage return. It's as simple as moving the cursor to column 0,
 ; and moving the cursor to the next line, which will trigger a scroll at the
 ; bottom of the screen.
 ; ------------------------------------------------------------------------------
-. c0a6 lda #$00
-. c0a8 sta $cb
-. c0aa jsr $c086
-. c0ad rts
+. c0a3 lda #$00
+. c0a5 sta $cb
+. c0a7 jsr $c083
+. c0aa rts
 
 ; ------------------------------------------------------------------------------
 ; Execute backspace. The cursor moves left, erasing where it lands.
 ; ------------------------------------------------------------------------------
-. c0ae lda #$00
-. c0b0 jsr $c0ea
-. c0b3 jsr $c094
-. c0b6 jsr $c0ea
-. c0b9 rts
+. c0ab lda #$00
+. c0ad jsr $c0e7
+. c0b0 jsr $c091
+. c0b3 jsr $c0e7
+. c0b6 rts
 
 ; ------------------------------------------------------------------------------
 ; Scroll screen up one line. Copies one row at a time and fills the last line
 ; with blanks.
 ; ------------------------------------------------------------------------------
-. c0ba ldx #$01
-. c0bc ldy #$31
-. c0be lda $a0,x
-. c0c0 sta $f2
-. c0c2 lda $b4,x
-. c0c4 sta $f3
-. c0c6 lda ($f2),y
-. c0c8 pha
-. c0c9 dex
-. c0ca lda $a0,x
-. c0cc sta $f0
-. c0ce lda $b4,x
-. c0d0 sta $f1
-. c0d2 pla
-. c0d3 sta ($f0),y
-. c0d5 inx
-. c0d6 dey
-. c0d7 bpl $c0be
-. c0d9 inx
-. c0da txa
-. c0db cmp #$14
-. c0dd bne $c0bc
-. c0df ldy #$31
-. c0e1 lda $20
-. c0e3 sta $13b6,y
-. c0e6 dey
-. c0e7 bpl $c0e3
-. c0e9 rts
+. c0b7 ldx #$01
+. c0b9 ldy #$31
+. c0bb lda $a0,x
+. c0bd sta $f2
+. c0bf lda $b4,x
+. c0c1 sta $f3
+. c0c3 lda ($f2),y
+. c0c5 pha
+. c0c6 dex
+. c0c7 lda $a0,x
+. c0c9 sta $f0
+. c0cb lda $b4,x
+. c0cd sta $f1
+. c0cf pla
+. c0d0 sta ($f0),y
+. c0d2 inx
+. c0d3 dey
+. c0d4 bpl $c0bb
+. c0d6 inx
+. c0d7 txa
+. c0d8 cmp #$14
+. c0da bne $c0b9
+. c0dc ldy #$31
+. c0de lda $20
+. c0e0 sta $13b6,y
+. c0e3 dey
+. c0e4 bpl $c0e0
+. c0e6 rts
 
 ; ------------------------------------------------------------------------------
 ; Plot one character at cursor position:
@@ -254,80 +254,79 @@
 ; (yes, reverse Cartesian for speed)
 ; AC preserved.
 ; ------------------------------------------------------------------------------
-. c0ea pha
-. c0eb ldx $ca
-. c0ed ldy $cb
-. c0ef lda $a0,x
-. c0f1 sta $f0
-. c0f3 lda $b4,x
-. c0f5 sta $f1
-. c0f7 pla
-. c0f8 sta ($f0),y
-. c0fa rts
+. c0e7 pha
+. c0e8 ldx $ca
+. c0ea ldy $cb
+. c0ec lda $a0,x
+. c0ee sta $f0
+. c0f0 lda $b4,x
+. c0f2 sta $f1
+. c0f4 pla
+. c0f5 sta ($f0),y
+. c0f7 rts
 
 ; ------------------------------------------------------------------------------
 ; Print one character at cursor position:
 ; AC: ASCII value; XR, YR: row, column
-; Similar to $c0ea but finishes with a cursor right.
+; Similar to $c0e7 but finishes with a cursor right.
 ; AC preserved.
 ; ------------------------------------------------------------------------------
-. c0fb pha
-. c0fc ldx $ca
-. c0fe ldy $cb
-. c100 lda $a0,x
-. c102 sta $f0
-. c104 lda $b4,x
-. c106 sta $f1
-. c108 pla
-. c109 sta ($f0),y
-. c10b jsr $c07a
-. c10e rts
+. c0f8 pha
+. c0f9 ldx $ca
+. c0fb ldy $cb
+. c0fd lda $a0,x
+. c0ff sta $f0
+. c101 lda $b4,x
+. c103 sta $f1
+. c105 pla
+. c106 sta ($f0),y
+. c108 jmp $c077
+. c10b rts
 
 ; ------------------------------------------------------------------------------
 ; print string at cursor location
 ; :string_ptr - address of string
 ; set :cursor_row and :cursor_col before calling
 ; ------------------------------------------------------------------------------
-. c10f ldy #$00
-. c111 lda ($f4),y
-. c113 beq $c123
-. c115 sty $fb
-. c117 jsr $c0ea
-. c11a jsr $c07a
-. c11d ldy $fb
-. c11f iny
-. c120 jmp $c111
-. c123 rts
+. c10c ldy #$00
+. c10e lda ($f4),y
+. c110 beq $c11d
+. c112 sty $fb
+. c114 jsr $c0f8
+. c117 ldy $fb
+. c119 iny
+. c11a jmp $c10e
+. c11d rts
 
 ; ------------------------------------------------------------------------------
 ; print string at cursor location
 ; :string_ptr - address of string
 ; set :cursor_row and :cursor_col before calling
 ; ------------------------------------------------------------------------------
-. c124 ldy #$00
-. c126 lda ($f4),y
-. c128 beq $c123
-. c12a sty $fb
-. c12c jsr $c0ea
-. c12f jsr $c07a
-. c132 ldy $fb
-. c134 iny
-. c135 jmp $c126
-. c138 jsr $c0a6
-. c13b rts
+. c11e ldy #$00
+. c120 lda ($f4),y
+. c122 beq $c132
+. c124 sty $fb
+. c126 jsr $c0e7
+. c129 jsr $c077
+. c12c ldy $fb
+. c12e iny
+. c12f jmp $c120
+. c132 jmp $c0a3
+. c135 rts
 
 ; ------------------------------------------------------------------------------
 ; Clear screen; fills screen with nulls
 ; ------------------------------------------------------------------------------
-. c13c lda $00
-. c13e ldx #$fa
-. c140 sta $0fff,x
-. c143 sta $10f9,x
-. c146 sta $11f3,x
-. c149 sta $12ed,x
-. c14c dex
-. c14d bne $c140
-. c14f rts
+. c136 lda $00
+. c138 ldx #$fa
+. c13a sta $0fff,x
+. c13d sta $10f9,x
+. c140 sta $11f3,x
+. c143 sta $12ed,x
+. c146 dex
+. c147 bne $c13a
+. c149 rts
 
 ; ------------------------------------------------------------------------------
 ; input string from keyboard
@@ -336,59 +335,59 @@
 ; :input_length - max characters
 ; set :cursor_row and :cursor_col before calling
 ; ------------------------------------------------------------------------------
-. c150 lda $e0
-. c152 jsr $c0fb
-. c155 lda $20
-. c157 jsr $c0fb
-. c15a lda #$01
-. c15c sta $cc
-. c15e ldx #$00
-. c160 lda $0e
-. c162 beq $c160
+. c14a lda $e0
+. c14c jsr $c0f8
+. c14f lda $20
+. c151 jsr $c0f8
+. c154 lda #$01
+. c156 sta $cc
+. c158 ldx #$00
+. c15a lda $0e
+. c15c beq $c15a
 
-. c164 cmp #$08
-. c166 bne $c17a
-. c168 cpx #$00
-. c16a beq $c19e
-. c16c stx $fa
-. c16e jsr $c0ae
-. c171 ldx $fa
-. c173 dex
-. c174 sta $0200,x
-. c177 jmp $c19e
+. c15e cmp #$08
+. c160 bne $c174
+. c162 cpx #$00
+. c164 beq $c198
+. c166 stx $fa
+. c168 jsr $c0ab
+. c16b ldx $fa
+. c16d dex
+. c16e sta $0200,x
+. c171 jmp $c198
 
-. c17a cmp #$0d
-. c17c bne $c186
-. c17e lda $20
-. c180 jsr $c0ea
-. c183 jmp $c1a5
+. c174 cmp #$0d
+. c176 bne $c180
+. c178 lda $20
+. c17a jsr $c0e7
+. c17d jmp $c19f
 
-. c186 and #$60
-. c188 bne $c18d
-. c18a jmp $c19e
-. c18d cpx $e1
-. c18f beq $c19e
-. c191 stx $fa
-. c193 lda $0e
-. c195 sta $0200,x
-. c198 jsr $c0fb
-. c19b ldx $fa
-. c19d inx
+. c180 and #$60
+. c182 bne $c187
+. c184 jmp $c198
+. c187 cpx $e1
+. c189 beq $c198
+. c18b stx $fa
+. c18d lda $0e
+. c18f sta $0200,x
+. c192 jsr $c0f8
+. c195 ldx $fa
+. c197 inx
 
-. c19e lda #$00
-. c1a0 sta $0e
-. c1a2 jmp $c160
+. c198 lda #$00
+. c19a sta $0e
+. c19c jmp $c15a
 
-. c1a5 ldy #$00
-. c1a7 lda $0200,y
-. c1aa beq $c1b7
-. c1ac sta ($f4),y
-. c1ae lda #$00
-. c1b0 sta $0200,y
-. c1b3 iny
-. c1b4 jmp $c1a7
-. c1b7 sta ($f4),y
+. c19f ldy #$00
+. c1a1 lda $0200,y
+. c1a4 beq $c1b1
+. c1a6 sta ($f4),y
+. c1a8 lda #$00
+. c1aa sta $0200,y
+. c1ad iny
+. c1ae jmp $c1a1
+. c1b1 sta ($f4),y
 
-. c1b9 sta $0e
-. c1bb sta $cc
-. c1bd rts
+. c1b3 sta $0e
+. c1b5 sta $cc
+. c1b7 rts

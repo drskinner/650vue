@@ -1,0 +1,501 @@
+#INCLUDE _lib/kernal
+
+* = $2000
+
+strBlankLine  !str `                                                  `
+strPressSpace !str `Press space to continue.`
+strSeparator  !str ` ------------------------------------------------ `
+
+strExitGame   !str `Thank you for playing lemonade!`
+
+strMenu0      !str `           LEMONADE STAND - MAIN MENU             `
+strMenu1      !str `           1.   Begin Lemonade                    `
+strMenu2      !str `           2.   Student Instructions              `
+strMenu3      !str `           3.   Teacher Instructions              `
+strMenu4      !str `           4.   Exit Program                      `
+strMenu5      !str `             Press a number key (1-4)             `
+
+strStudent10  !str ` Lemonade                Student Instructions - 1 `
+strStudent11  !str ` You've decided to run a lemonade stand for 10    `
+strStudent12  !str ` Saturdays this summer in order to make some      `
+strStudent13  !str ` money. You do a little research, and soon learn  `
+strStudent14  !str ` that running a stand costs money.                `
+strStudent15  !str ` Your goal for the summer will be to make as big  `
+strStudent16  !str ` a profit as you can.                             `
+
+strStudent20  !str ` Lemonade                Student Instructions - 2 `
+strStudent21  !str ` Your family offers to give you $10 in order to   `
+strStudent22  !str ` get started. You argue that thanks to inflation, `
+strStudent23  !str ` those ten dollars won't buy what they used to.   `
+strStudent24  !str ` They agree, and grudgingly give you $40.         `
+strStudent25  !str ` When summer is over, you will have to pay back   `
+strStudent26  !str ` the $40, but you will not have to pay interest.  `
+
+strStudent30  !str ` Lemonade                Student Instructions - 3 `
+strStudent31  !str ` You will require three things to make lemonade:  `
+strStudent32  !str ` sugar, concentrated lemon juice, and cups. You   `
+strStudent33  !str ` will find information about the cost of each     `
+strStudent34  !str ` component at the bottom of the screen.           `
+strStudent35  !str ` You must decide how much of each you will buy,   `
+strStudent36  !str ` depending on the market outlook for the day.     `
+
+strStudent40  !str ` Lemonade                Student Instructions - 4 `
+strStudent41  !str ` Finally...`
+strStudent42  !str ` Don't always rely on the weather forecast. It    `
+strStudent43  !str ` comes from Environment Canada, and you know what `
+strStudent44  !str ` that means.`
+strStudent45  !str ` You should check the actual temperatures and     `
+strStudent46  !str ` make adjustments if conditions change.           `
+
+strStudent50  !str ` Lemonade                Student Instructions - 5 `
+strStudent51  !str `HINTS:`
+strStudent52  !str ` If you keep your price low, you'll sell more,    `
+strStudent53  !str ` but you will make less money on each sale.       `
+strStudent54  !str ` On hot or humid days, you will sell more and     `
+strStudent55  !str ` also be able to charge more per cup, because of  `
+strStudent56  !str ` increased demand. When the humidex is much       `
+strStudent57  !str ` higher than the temperature, it is a humid day.  `
+
+strTeacher10  !str ` Lemonade                Teacher Instructions - 1 `
+strTeacher11  !str ` To the best of my knowledge, this program is in  `
+strTeacher12  !str ` the public domain. If this is not the case,      `
+strTeacher13  !str ` please contact:`
+strTeacher14  !str ` Commodore Business Machines`
+strTeacher15  !str ` 3370 Pharmacy Ave.`
+strTeacher16  !str ` Agincourt, Ontario` 
+strTeacher17  !str ` Canada  M1W 2K4`
+strTeacher18  !str `Just kidding! :)`
+strTeacher19  !str `   You can email me at myles.skinner@gmail.com`
+
+strTeacher20  !str ` Lemonade                Teacher Instructions - 2 `
+strTeacher21  !str ` The original Lemonade Stand game was written by  `
+strTeacher22  !str ` Bob Jamison at MECC - the Minnesota Educational  `
+strTeacher23  !str ` Computing Consortium in 1973. The 650Vue version `
+strTeacher24  !str ` is loosely based on Commodore's port that was    `
+strTeacher25  !str ` part of their educational software collection.   ` 
+strTeacher26  !str `       https://github.com/drskinner/650vue        `
+
+
+@SetReset $3000
+
+* = $2fff
+resetProgramCounter   brk
+; ------------------------------------------------------------------------------
+; Draw main menu, wait for input, and handle branches.
+; ------------------------------------------------------------------------------
+drawMainMenu          jsr clearScreen
+                      jsr doCarriageReturn
+                      @setString strMenu0
+                      jsr printString
+                      @setString strSeparator
+                      jsr printString
+                      jsr doCarriageReturn
+                      jsr doCarriageReturn
+                      @setString strMenu1
+                      jsr printStringWithCR
+                      @setString strMenu2
+                      jsr printStringWithCR
+                      @setString strMenu3
+                      jsr printStringWithCR
+                      @setString strMenu4
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strMenu5
+                      jsr printStringWithCR
+
+mainMenuClearKey      lda #0
+                      sta :zp_last_key          ; clear key before reading
+mainMenuGetKey        lda :zp_last_key
+                      beq mainMenuGetKey
+mainMenuOption2       cmp #$32
+                      bne mainMenuOption3
+                      jmp studentInstructions
+mainMenuOption3       cmp #$33
+                      bne mainMenuOption4
+                      jmp teacherInstructions
+mainMenuOption4       cmp #$34
+                      bne mainMenuClearKey
+                      jmp exitGame 
+
+; ------------------------------------------------------------------------------
+; Show student instructions with pagination.
+; ------------------------------------------------------------------------------
+;
+; Student Instructions - Page 1
+;
+studentInstructions   jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent10
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent11
+                      jsr printStringWithCR
+                      @setString strStudent12
+                      jsr printStringWithCR
+                      @setString strStudent13
+                      jsr printStringWithCR
+                      @setString strStudent14
+                      jsr printStringWithCR
+                      @setString strStudent15
+                      jsr printStringWithCR
+                      @setString strStudent16
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      inc :cursor_row
+                      lda #13
+                      sta :cursor_col
+                      @setString strPressSpace
+                      jsr printStringRVS
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+studentInstGetKey1    lda :zp_last_key
+                      cmp :ascii_space
+                      bne studentInstGetKey1
+;
+; Student Instructions - Page 2
+;
+studentInstructions2  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent20
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent21
+                      jsr printStringWithCR
+                      @setString strStudent22
+                      jsr printStringWithCR
+                      @setString strStudent23
+                      jsr printStringWithCR
+                      @setString strStudent24
+                      jsr printStringWithCR
+                      @setString strStudent25
+                      jsr printStringWithCR
+                      @setString strStudent26
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      inc :cursor_row
+                      lda #13
+                      sta :cursor_col
+                      @setString strPressSpace
+                      jsr printStringRVS
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+studentInstGetKey2    lda :zp_last_key
+                      cmp :ascii_space
+                      bne studentInstGetKey2
+;
+; Student Instructions - Page 3
+;
+studentInstructions3  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent30
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent31
+                      jsr printStringWithCR
+                      @setString strStudent32
+                      jsr printStringWithCR
+                      @setString strStudent33
+                      jsr printStringWithCR
+                      @setString strStudent34
+                      jsr printStringWithCR
+                      @setString strStudent35
+                      jsr printStringWithCR
+                      @setString strStudent36
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      inc :cursor_row
+                      lda #13
+                      sta :cursor_col
+                      @setString strPressSpace
+                      jsr printStringRVS
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+studentInstGetKey3    lda :zp_last_key
+                      cmp :ascii_space
+                      bne studentInstGetKey3
+;
+; Student Instructions - Page 4
+;
+studentInstructions4  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent40
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent41
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strStudent42
+                      jsr printStringWithCR
+                      @setString strStudent43
+                      jsr printStringWithCR
+                      @setString strStudent44
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strStudent45
+                      jsr printStringWithCR
+                      @setString strStudent46
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      inc :cursor_row
+                      lda #13
+                      sta :cursor_col
+                      @setString strPressSpace
+                      jsr printStringRVS
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+studentInstGetKey4    lda :zp_last_key
+                      cmp :ascii_space
+                      bne studentInstGetKey4
+;
+; Student Instructions - Page 5
+;
+studentInstructions5  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent50
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent51
+                      lda #1
+                      sta :cursor_col
+                      jsr printStringRVS
+                      jsr doCarriageReturn
+                      jsr doCarriageReturn
+                      @setString strStudent52
+                      jsr printStringWithCR
+                      @setString strStudent53
+                      jsr printStringWithCR
+                      @setString strStudent54
+                      jsr printStringWithCR
+                      @setString strStudent55
+                      jsr printStringWithCR
+                      @setString strStudent56
+                      jsr printStringWithCR
+                      @setString strStudent57
+                      jsr printStringWithCR
+                      lda #13
+                      sta :cursor_col
+                      @setString strPressSpace
+                      jsr printStringRVS
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+studentInstGetKey5    lda :zp_last_key
+                      cmp :ascii_space
+                      bne studentInstGetKey5
+                      jmp drawMainMenu
+
+; ------------------------------------------------------------------------------
+; Show teacher instructions with pagination.
+; ------------------------------------------------------------------------------
+;
+; Teacher Instructions - Page 1
+;
+;
+; Student Instructions - Page 1
+;
+teacherInstructions   jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strTeacher10
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strTeacher11
+                      jsr printStringWithCR
+                      @setString strTeacher12
+                      jsr printStringWithCR
+                      @setString strTeacher13
+                      jsr printStringWithCR
+                      jsr doCarriageReturn  
+                      @setString strTeacher14
+                      lda #10
+                      sta :cursor_col
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strTeacher15
+                      lda #15
+                      sta :cursor_col
+                      jsr printStringWithCR
+                      @setString strTeacher16
+                      lda #15
+                      sta :cursor_col
+                      jsr printStringWithCR
+                      @setString strTeacher17
+                      lda #15
+                      sta :cursor_col
+                      jsr printStringWithCR
+                      lda #18
+                      sta :cursor_row
+                      lda #13
+                      sta :cursor_col
+                      @setString strPressSpace
+                      jsr printStringRVS
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+teacherInstGetKey0    lda :zp_last_key
+                      cmp :ascii_space
+                      bne teacherInstGetKey0
+                      lda #12
+                      sta :cursor_row
+                      lda #16
+                      sta :cursor_col
+                      lda :ascii_space
+                      jsr printCharAtCursor
+                      lda #17
+                      @setString strTeacher18
+                      jsr printStringRVS
+                      lda :ascii_space
+                      jsr printCharAtCursor
+                      jsr doCarriageReturn
+                      @setString strBlankLine
+                      jsr printString
+                      @setString strTeacher19
+                      jsr printString
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+teacherInstGetKey1    lda :zp_last_key
+                      cmp :ascii_space
+                      bne teacherInstGetKey1
+;
+; Teacher Instructions - Page 2
+;
+teacherInstructions2  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strTeacher20
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strTeacher21
+                      jsr printStringWithCR
+                      @setString strTeacher22
+                      jsr printStringWithCR
+                      @setString strTeacher23
+                      jsr printStringWithCR
+                      @setString strTeacher24
+                      jsr printStringWithCR
+                      @setString strTeacher25
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      @setString strTeacher26
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      lda #13
+                      sta :cursor_col
+                      @setString strPressSpace
+                      jsr printStringRVS
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+teacherInstGetKey2    lda :zp_last_key
+                      cmp :ascii_space
+                      bne teacherInstGetKey2
+                      jmp drawMainMenu
+
+; ------------------------------------------------------------------------------
+; Exit game, and reset PC for another run.
+; ------------------------------------------------------------------------------
+exitGame              jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strExitGame
+                      jsr printString
+                      jmp resetProgramCounter
+
+
+
+
+
+
+
+
+* = $d000
+start   lda :zp_random
+        ldx :zp_random
+        sta :acc
+        stx :acc+1
+        sta $86
+        stx $87
+
+        lda :zp_random
+        ldx :zp_random
+        sta :aux
+        stx :aux+1
+
+        jsr multiply
+
+print16 brk
+
+        lda #$00
+        sta :aux+1
+        brk
+        jsr divide
+        brk
+
+;-----------------------------------
+; 16 bit multiply and divide routines.
+; Three 16 bit (two-byte) locations
+; ACC, AUX and EXT must be set up,
+; preferably on zero page.
+;-------------------------------------
+
+:acc = $80
+:aux = $82
+:ext = $84
+
+; MULTIPLY ROUTINE
+
+; ACC*AUX -> [ACC,EXT] (low,hi) 32 bit result
+
+multiply  lda #0
+          sta :ext+1
+          ldy #$11
+          clc
+mLoop     ror :ext+1
+          ror
+          ror :acc+1
+          ror :acc
+          bcc mul2
+          clc
+          adc :aux
+          pha
+          lda :aux+1
+          adc :ext+1
+          sta :ext+1
+          pla
+mul2      dey
+          bne mLoop
+          sta :ext
+          rts
+
+; DIVIDE ROUTINE
+
+
+
+; ACC/AUX -> ACC, remainder in EXT
+
+divide    lda #0
+          sta :ext+1
+          ldy #$10
+dLoop     asl :acc
+          rol :acc+1
+          rol
+          rol :ext+1
+          pha
+          cmp :aux
+          lda :ext+1
+          sbc :aux+1
+          bcc div2
+          sta :ext+1
+          pla
+          sbc :aux
+          pha
+          inc :acc
+div2      pla
+          dey
+          bne dLoop
+          sta :ext
+          rts

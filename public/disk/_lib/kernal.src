@@ -1,44 +1,22 @@
 ; ------------------------------------------------------------------------------
-; Routines to collect string input and print strings on screen.
-; 650Vue demo by Dr. Myles L. Skinner.
+; 650Vue Kernal routines.
+; "Kernal" is Commodore's misspelling of kernel.
+;
+; All the useful "ROM" routines that serve as the building blocks of larger
+; programs. Keyboard and screen I/O, various string and math routines.
 ;
 ; Copyright © 2020 Dr. Myles L. Skinner - All Rights Reserved.
 ; ------------------------------------------------------------------------------
 
 @SetReset $c000
 
-:zp_last_key   = $0e  ; last key press
-:screen_row_lo = $a0  ; screen RAM low address table
-:screen_row_hi = $b4  ; screen RAM high address table
+:zp_last_key   = $0e    ; last key press
+:zp_random     = $0f    ; random number
 
-:cursor_row    = $ca  ; cursor y position
-:cursor_col    = $cb  ; cursor x position
-:blink_enabled = $cc  ; cursor blink enabled
-:blink_counter = $cd  ; countdown timer
-:cursor_char   = $ce  ; character under cursor
-:blink_state   = $cf  ; cursor blink state
+:screen_row_lo = $a0    ; screen RAM low address table
+:screen_row_hi = $b4    ; screen RAM high address table
 
-> 00ca 00 00          ; cursor at "home" position
-> 00cc 00             ; blink on
-> 00cd 14             ; cursor timer
-
-:input_prompt   = $e0  ; character for prompt (`?`)
-:input_length   = $e1  ; max chars for input
-> 00e0 3f 08
-:input_buffer   = $0200
-
-:plot_row       = $f0
-:read_row       = $f2
-:string_ptr     = $f4
-
-:xr_temp        = $fa
-:yr_temp        = $fb
-
-:delete         = #$08
-:enter          = #$0d
-:ascii_null     = $00
-:ascii_space    = $20
-:last_row_base  = $13b6
+:last_row_base = $13b6  ; base address of last screen row
 
 ; ------------------------------------------------------------------------------
 ; Screen RAM low bytes
@@ -54,58 +32,48 @@
 > 00bc 11 11 11 12 12 12 12 12
 > 00c4 13 13 13 13
 
-* = $2000
-string01      !str `What is your name (max. 8 characters)`
-string02      !str `Press any key to exit.`
-string03      !str `Done.`
-string04      !str `Hello, `
-string05      !str `, welcome to my input demo.`
-stringName    !res $09   ; reserve 9 bytes
-              !chr `END OF STRINGS`
-; the `END OF STRINGS` does nothing but if you look at memory from $2000,
-; you can see how the strings and reserved bytes are laid out in memory.
+:cursor_row     = $ca  ; cursor y position
+:cursor_col     = $cb  ; cursor x position
+:blink_enabled  = $cc  ; cursor blink enabled
+:blink_counter  = $cd  ; countdown timer
+:cursor_char    = $ce  ; character under cursor
+:blink_state    = $cf  ; cursor blink state
 
-* = $e000
-#INCLUDE _lib/cursor_blink
+> 00ca 00 00          ; cursor at "home" position
+> 00cc 00             ; blink off
+> 00cd 14             ; cursor timer
 
+:input_prompt   = $e0  ; character for prompt (`?`)
+:input_length   = $e1  ; max chars for input
+> 00e0 3f 08
+:input_buffer   = $0200
+
+:plot_row       = $f0
+:read_row       = $f2
+:string_ptr     = $f4
+
+:xr_temp        = $fe
+:yr_temp        = $ff
+
+; set ASCII character values for control characters
+:arrow_down    = #$1e
+:arrow_left    = #$1f
+:arrow_right   = #$1d
+:arrow_up      = #$1c
+:ascii_null    = #$00
+:ascii_delete  = #$08
+:ascii_enter   = #$0d
+:ascii_space   = #$20
+
+* = $f000
 ; ------------------------------------------------------------------------------
-; set IRQ vector to $e000
+; Move cursor up. This move is very simple: move the cursor up one row, but
+; not beyond the top edge.
 ; ------------------------------------------------------------------------------
-* = $c000
-initialize  @setIRQ $e000
-
-            lda #$00
-            sta :cursor_row
-            sta :cursor_col
-            jsr clearScreen
-
-main        @setString string01
-            jsr printString
-
-            @setString stringName
-            jsr inputWithPrompt
-            jsr doCarriageReturn
-            jsr doCarriageReturn
-
-            @setString string04
-            jsr printString
-            @setString stringName
-            jsr printString
-            @setString string05
-            jsr printStringWithCR
-            jsr doCarriageReturn
-
-pressAnyKey @setString string02
-            jsr printString
-            jsr doCarriageReturn
-            jsr doCarriageReturn
-waitForKey  lda :zp_last_key
-            beq waitForKey
-            @setString string03
-            jsr printString
-            lda #$00
-            sta :zp_last_key
-            brk
+moveCursorUp        dec :cursor_row
+                    bpl exitCursorUp    ; skip if in bounds
+                    inc :cursor_row     ; check for top row
+exitCursorUp        rts
 
 ; ------------------------------------------------------------------------------
 ; Move cursor right. If we go off the right edge, then we're on the next line.
@@ -125,7 +93,7 @@ moveCursorDown      inc :cursor_row     ; current cursor row
                     cmp :cursor_row     ; did we pass bottom?
                     bne exitCursorRight ; skip if in bounds
                     dec :cursor_row     ; bring cursor back to bottom row
-                    jsr scrollScreen
+                    jmp scrollScreen
 exitCursorRight     rts
 
 ; ------------------------------------------------------------------------------
@@ -145,22 +113,52 @@ exitCursorLeft1     inc :cursor_col     ; column is $ff, make $00
                     rts
 
 ; ------------------------------------------------------------------------------
-; Execute carriage return. It's as simple as moving the cursor to column 0,
-; and moving the cursor to the next line, which will trigger a scroll at the
-; bottom of the screen.
-; ------------------------------------------------------------------------------
-doCarriageReturn    lda #$00            ; set column to zero
-                    sta :cursor_col
-                    jsr moveCursorDown  ; call cursor down
-                    rts
-
-; ------------------------------------------------------------------------------
 ; Execute backspace. The cursor moves left, erasing where it lands.
 ; ------------------------------------------------------------------------------
 doBackspace         lda #$00
                     jsr plotCharAtCursor
                     jsr moveCursorLeft    ; cursor left subroutine
                     jsr plotCharAtCursor
+                    rts
+
+; ------------------------------------------------------------------------------
+; Execute carriage return. It's as simple as moving the cursor to column 0,
+; and moving the cursor to the next line, which will trigger a scroll at the
+; bottom of the screen.
+; ------------------------------------------------------------------------------
+doCarriageReturn    lda #$00            ; set column to zero
+                    sta :cursor_col
+                    jmp moveCursorDown  ; call cursor down
+                    rts
+
+; ------------------------------------------------------------------------------
+; Execute delete. The cursor moves left, pulling everything up to the
+; end of the line along with it. A delete from column 0 will erase the last
+; character on the previous line.
+; ------------------------------------------------------------------------------
+doDelete            jsr moveCursorLeft    ; cursor left subroutine
+                    ldx :cursor_row       ; where is my cursor?
+                    ldy :cursor_col
+pullNextChar        iny                   ; go one past
+                    cpy #$32              ; off-screen?
+                    beq endDelete         ; yes? finish routine
+                    lda :screen_row_lo,x  ; find RAM address of position
+                    sta :read_row
+                    lda :screen_row_hi,x
+                    sta :read_row+1
+                    lda (:read_row),y ; read character at position
+                    dey
+                    sta (:read_row),y
+                    iny
+                    jmp pullNextChar
+endDelete           dey                   ; back to last column
+                    lda :ascii_space
+                    sta (:read_row),y
+                    ldy :cursor_col
+                    cpy #$31              ; last column?
+                    bne exitDelete
+                    jsr plotCharAtCursor  ; plot space under cursor
+exitDelete          sta :cursor_char
                     rts
 
 ; ------------------------------------------------------------------------------
@@ -251,6 +249,22 @@ exitPrintString     rts
 ; :string_ptr - address of string
 ; set :cursor_row and :cursor_col before calling
 ; ------------------------------------------------------------------------------
+printStringRVS      ldy #$00
+loopPrintStringRVS  lda (:string_ptr),y
+                    beq exitPrintStringRVS
+                    sty :yr_temp
+                    ora #$80                ; set high bit (RVS)
+                    jsr printCharAtCursor
+                    ldy :yr_temp
+                    iny
+                    jmp loopPrintStringRVS
+exitPrintStringRVS  rts
+
+; ------------------------------------------------------------------------------
+; print string at cursor location, followed by carriage return
+; :string_ptr - address of string
+; set :cursor_row and :cursor_col before calling
+; ------------------------------------------------------------------------------
 printStringWithCR   ldy #$00
 loopPrintStringCR   lda (:string_ptr),y
                     beq exitPrintStringCR
@@ -264,6 +278,21 @@ exitPrintStringCR   jmp doCarriageReturn
                     rts
 
 ; ------------------------------------------------------------------------------
+; Update character at cursor position (what appears "under" the cursor);
+; store in :cursor_char
+; AC not preserved.
+; ------------------------------------------------------------------------------
+setCharUnderCursor  ldx :cursor_row
+                    ldy :cursor_col
+                    lda :screen_row_lo,x
+                    sta :plot_row
+                    lda :screen_row_hi,x
+                    sta :plot_row+1
+                    lda (:plot_row),y
+                    sta :cursor_char
+                    rts
+
+; ------------------------------------------------------------------------------
 ; Clear screen; fills screen with nulls
 ; ------------------------------------------------------------------------------
 clearScreen         lda :ascii_null
@@ -274,6 +303,21 @@ loopClearScreen     sta $0fff,x
                     sta $12ed,x
                     dex
                     bne loopClearScreen
+                    rts
+
+; ------------------------------------------------------------------------------
+; Clear screen; fills screen with nulls
+; ------------------------------------------------------------------------------
+clearAndHomeScreen  lda :ascii_null
+                    ldx #$fa
+loopClearScreen     sta $0fff,x
+                    sta $10f9,x
+                    sta $11f3,x
+                    sta $12ed,x
+                    dex
+                    bne loopClearScreen
+                    sta :cursor_row
+                    sta :cursor_col
                     rts
 
 ; ------------------------------------------------------------------------------
@@ -293,7 +337,7 @@ doInput             lda #$01
 inputReadKeyboard   lda :zp_last_key
                     beq inputReadKeyboard
 
-testDelete          cmp :delete
+testDelete          cmp :ascii_delete
                     bne testEnter           ; check another match
                     cpx #$00
                     beq inputClearLastKey   ; don't backspace beyond 0
@@ -304,7 +348,7 @@ testDelete          cmp :delete
                     sta :input_buffer,x     ; put 0 in input buffer at cursor
                     jmp inputClearLastKey
 
-testEnter           cmp :enter
+testEnter           cmp :ascii_enter
                     bne testPrintable
                     lda :ascii_space
                     jsr plotCharAtCursor
