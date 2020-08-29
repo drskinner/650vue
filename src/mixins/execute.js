@@ -259,32 +259,54 @@ export const execute = {
     // 2s-complements, signed 8-bit integers, and clever XORs but here,
     // performance isn't an issue, so I can try something a little more readable.
     //
-    // TODO: Also, Decimal Mode is a fun complication that I'm totally ignoring for now.
+    // Decimal Mode is a fun complication that I'm fudging a bit. Valid BCD numbers
+    // should be handled correctly, but invalid digits [a..f] and some 'undefined'
+    // flags may not behave as they would on real hardware.
     //
     ADC(address) {
-      let signedAcc = this.byteToSignedInt(this.cpu.ac);
-      let signedRam = this.byteToSignedInt(this.ram[address]);
-      let signedSum = signedAcc + signedRam;
+      if (this.flagStatus(constants.flags.SR_DECIMAL)) {
+        let decimalAcc = ((this.cpu.ac & 0xf0) / 16 * 10) + (this.cpu.ac & 0x0f);
+        let decimalRam = ((this.ram[address] & 0xf0) / 16 * 10) + (this.ram[address] & 0x0f);
+        let decimalSum = decimalAcc + decimalRam;
+        // eslint-disable-next-line
+        console.log(decimalAcc, decimalRam, decimalSum);
+        if (this.flagStatus(constants.flags.SR_CARRY)) {
+          decimalSum += 1;
+        }
 
-      if (signedSum > 127 || signedSum < -128) {
-        this.setFlag(constants.flags.SR_OVERFLOW);
+        if (decimalSum >= 100) {
+          this.setFlag(constants.flags.SR_CARRY);
+        } else {
+          this.clearFlag(constants.flags.SR_CARRY);
+        }
+
+        this.cpu.ac = (Math.floor((decimalSum / 10) % 10) * 16) + (decimalSum % 10);
+        this.znFlags(this.cpu.ac);
       } else {
-        this.clearFlag(constants.flags.SR_OVERFLOW);
-      }
+        let signedAcc = this.byteToSignedInt(this.cpu.ac);
+        let signedRam = this.byteToSignedInt(this.ram[address]);
+        let signedSum = signedAcc + signedRam;
 
-      let sum = this.cpu.ac + this.ram[address];
-      if (this.flagStatus(constants.flags.SR_CARRY)) {
-        sum += 1;
-      }
+        if (signedSum > 127 || signedSum < -128) {
+          this.setFlag(constants.flags.SR_OVERFLOW);
+        } else {
+          this.clearFlag(constants.flags.SR_OVERFLOW);
+        }
 
-      if (sum > 0xff) {
-        this.setFlag(constants.flags.SR_CARRY);
-      } else {
-        this.clearFlag(constants.flags.SR_CARRY);
-      }
+        let sum = this.cpu.ac + this.ram[address];
+        if (this.flagStatus(constants.flags.SR_CARRY)) {
+          sum += 1;
+        }
 
-      this.cpu.ac = sum & 0xff;
-      this.znFlags(this.cpu.ac);
+        if (sum > 0xff) {
+          this.setFlag(constants.flags.SR_CARRY);
+        } else {
+          this.clearFlag(constants.flags.SR_CARRY);
+        }
+
+        this.cpu.ac = sum & 0xff;
+        this.znFlags(this.cpu.ac);
+      }
     },
     AND(address) {
       this.writeRegister({ register: 'ac', value: (this.cpu.ac & this.ram[address]) });
