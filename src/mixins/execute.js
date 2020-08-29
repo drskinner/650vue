@@ -268,8 +268,7 @@ export const execute = {
         let decimalAcc = ((this.cpu.ac & 0xf0) / 16 * 10) + (this.cpu.ac & 0x0f);
         let decimalRam = ((this.ram[address] & 0xf0) / 16 * 10) + (this.ram[address] & 0x0f);
         let decimalSum = decimalAcc + decimalRam;
-        // eslint-disable-next-line
-        console.log(decimalAcc, decimalRam, decimalSum);
+
         if (this.flagStatus(constants.flags.SR_CARRY)) {
           decimalSum += 1;
         }
@@ -674,33 +673,53 @@ export const execute = {
     // by inverting the operand and just adding, which is something you
     // can do in conventional arithmetic.
     //
-    // TODO: This facile approach won't work in Decimal Mode.
+    // This facile approach won't work in Decimal Mode.
     SBC(address) {
-      let operand = this.ram[address] ^ 0xff;
+      if (this.flagStatus(constants.flags.SR_DECIMAL)) {
+        let decimalAcc = ((this.cpu.ac & 0xf0) / 16 * 10) + (this.cpu.ac & 0x0f);
+        let decimalRam = ((this.ram[address] & 0xf0) / 16 * 10) + (this.ram[address] & 0x0f);
+        let decimalDiff = decimalAcc - decimalRam;
 
-      let signedAcc = this.byteToSignedInt(this.cpu.ac);
-      let signedRam = this.byteToSignedInt(operand);
-      let signedSum = signedAcc + signedRam;
+        if (!this.flagStatus(constants.flags.SR_CARRY)) {
+          decimalDiff -= 1;
+        }
 
-      if (signedSum > 127 || signedSum < -128) {
-        this.setFlag(constants.flags.SR_OVERFLOW);
+        if (decimalDiff < 0) {
+          this.clearFlag(constants.flags.SR_CARRY);
+          decimalDiff += 100;
+        } else {
+          this.setFlag(constants.flags.SR_CARRY);
+        }
+
+        this.cpu.ac = (Math.floor((decimalDiff / 10) % 10) * 16) + (decimalDiff % 10);
+        this.znFlags(this.cpu.ac);
       } else {
-        this.clearFlag(constants.flags.SR_OVERFLOW);
-      }
+        let operand = this.ram[address] ^ 0xff;
 
-      let sum = this.cpu.ac + operand;
-      if (this.flagStatus(constants.flags.SR_CARRY)) {
-        sum += 1;
-      }
+        let signedAcc = this.byteToSignedInt(this.cpu.ac);
+        let signedRam = this.byteToSignedInt(operand);
+        let signedSum = signedAcc + signedRam;
 
-      if (sum > 0xff) {
-        this.setFlag(constants.flags.SR_CARRY);
-      } else {
-        this.clearFlag(constants.flags.SR_CARRY);
-      }
+        if (signedSum > 127 || signedSum < -128) {
+          this.setFlag(constants.flags.SR_OVERFLOW);
+        } else {
+          this.clearFlag(constants.flags.SR_OVERFLOW);
+        }
 
-      this.cpu.ac = sum & 0xff;
-      this.znFlags(this.cpu.ac);
+        let sum = this.cpu.ac + operand;
+        if (this.flagStatus(constants.flags.SR_CARRY)) {
+          sum += 1;
+        }
+
+        if (sum > 0xff) {
+          this.setFlag(constants.flags.SR_CARRY);
+        } else {
+          this.clearFlag(constants.flags.SR_CARRY);
+        }
+
+        this.cpu.ac = sum & 0xff;
+        this.znFlags(this.cpu.ac);
+      }
     },
     SEC() {
       this.setFlag(constants.flags.SR_CARRY);
