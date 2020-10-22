@@ -1,0 +1,42 @@
+; ------------------------------------------------------------------------------
+; Draw main menu, wait for input, and handle branches.
+; ------------------------------------------------------------------------------
+drawMainMenu          jsr clearScreen
+                      jsr doCarriageReturn
+                      @setString strMenu0
+                      jsr printString
+                      @setString strSeparator
+                      jsr printString
+                      jsr doCarriageReturn
+                      jsr doCarriageReturn
+                      @setString strMenu1
+                      jsr printStringWithCR
+                      @setString strMenu2
+                      jsr printStringWithCR
+                      @setString strMenu3
+                      jsr printStringWithCR
+                      @setString strMenu4
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strMenu5
+                      jsr printStringWithCR
+
+mainMenuClearKey      lda #0
+                      sta :zp_last_key          ; clear key before reading
+mainMenuGetKey        lda :zp_last_key
+                      beq mainMenuGetKey
+mainMenuOption1       cmp #$31
+                      bne mainMenuOption2
+                      jmp welcomeScreen
+mainMenuOption2       cmp #$32
+                      bne mainMenuOption3
+                      jmp studentInstructions
+mainMenuOption3       cmp #$33
+                      bne mainMenuOption4
+                      jmp teacherInstructions
+mainMenuOption4       cmp #$34
+                      bne mainMenuClearKey
+                      jmp exitGame

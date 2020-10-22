@@ -1,0 +1,79 @@
+; ------------------------------------------------------------------------------
+; Show teacher instructions with pagination.
+; ------------------------------------------------------------------------------
+;
+; Teacher Instructions - Page 1
+;
+teacherInstructions   jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strTeacher10
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strTeacher11
+                      jsr printStringWithCR
+                      @setString strTeacher12
+                      jsr printStringWithCR
+                      @setString strTeacher13
+                      jsr printStringWithCR
+                      jsr doCarriageReturn  
+                      @setString strTeacher14
+                      lda #10
+                      sta :cursor_col
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strTeacher15
+                      lda #15
+                      sta :cursor_col
+                      jsr printStringWithCR
+                      @setString strTeacher16
+                      lda #15
+                      sta :cursor_col
+                      jsr printStringWithCR
+                      @setString strTeacher17
+                      lda #15
+                      sta :cursor_col
+                      jsr printStringWithCR
+                      jsr waitForSpace
+
+                      lda #12
+                      sta :cursor_row
+                      lda #16
+                      sta :cursor_col
+                      lda :ascii_space
+                      jsr printCharAtCursor
+                      lda #17
+                      @setString strTeacher18
+                      jsr printStringRVS
+                      lda :ascii_space
+                      jsr printCharAtCursor
+                      jsr doCarriageReturn
+                      @setString strBlankLine
+                      jsr printString
+                      @setString strTeacher19
+                      jsr printString
+                      jsr waitForSpace
+;
+; Teacher Instructions - Page 2
+;
+teacherInstructions2  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strTeacher20
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strTeacher21
+                      jsr printStringWithCR
+                      @setString strTeacher22
+                      jsr printStringWithCR
+                      @setString strTeacher23
+                      jsr printStringWithCR
+                      @setString strTeacher24
+                      jsr printStringWithCR
+                      @setString strTeacher25
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      @setString strTeacher26
+                      jsr printStringWithCR
+                      jsr waitForSpace
+                      jmp drawMainMenu

@@ -1,0 +1,55 @@
+; ------------------------------------------------------------------------------
+; Title screen. First thing the user sees.
+; ------------------------------------------------------------------------------
+drawTitleScreen       jsr clearScreen
+                      lda :ascii_hash
+                      ldx #$01
+titleFrameHorizontal  sta $1032,x
+                      sta $1384,x
+                      inx
+                      cpx #49
+                      bne titleFrameHorizontal
+                      ldx #$02
+titleFrameVertical    stx :cursor_row
+                      ldy #$01
+                      sty :cursor_col
+                      jsr plotCharAtCursor
+                      ldy #48
+                      sty :cursor_col
+                      jsr plotCharAtCursor
+                      inx
+                      cpx #18
+                      bne titleFrameVertical
+; all the text bits
+                      @SetCursor 4,11
+                      @setString strTitle01
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      lda #15
+                      sta :cursor_col
+                      @setString strTitle02
+                      jsr printStringWithCR
+                      lda #18
+                      sta :cursor_col
+                      @setString strTitle03
+                      jsr printStringWithCR                      
+                      inc :cursor_row
+                      lda #10
+                      sta :cursor_col
+                      @setString strTitle04
+                      jsr printStringWithCR
+                      inc :cursor_row
+                      inc :cursor_row
+                      lda #5
+                      sta :cursor_col
+                      @setString strTitle05
+                      jsr printStringWithCR
+                      lda #15
+                      sta :cursor_col
+                      @setString strTitle06
+                      jsr printStringWithCR
+                      lda #16
+                      sta :cursor_row
+                      jsr waitForSpaceRowSet
+
+; proceeds directly to menu

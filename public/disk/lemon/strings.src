@@ -1,0 +1,131 @@
+strBlankLine  !str `                                                  `
+strPressSpace !str `Press space to continue.`
+strSeparator  !str ` ------------------------------------------------ `
+
+strTitle01    !str `L E M O N A D E   S T A N D`
+strTitle02    !str `A Classic Text Game`
+strTitle03    !str `650Vue Version`
+strTitle04    !str `Original by Bob Jamison (1973)`
+strTitle05    !str `Copyright (C) 2020 Dr. Myles L. Skinner`
+strTitle06    !str `All Rights Reserved.`
+
+strExitGame   !str `Thank you for playing lemonade!`
+
+strMenu0      !str `           LEMONADE STAND - MAIN MENU             `
+strMenu1      !str `           1.   Begin Lemonade                    `
+strMenu2      !str `           2.   Student Instructions              `
+strMenu3      !str `           3.   Teacher Instructions              `
+strMenu4      !str `           4.   Exit Program                      `
+strMenu5      !str `             Press a number key (1-4)             `
+
+strStudent10  !str ` Lemonade                Student Instructions - 1 `
+strStudent11  !str ` You've decided to run a lemonade stand for 10    `
+strStudent12  !str ` Saturdays this summer in order to make some      `
+strStudent13  !str ` money. You do a little research, and soon learn  `
+strStudent14  !str ` that running a stand costs money.                `
+strStudent15  !str ` Your goal for the summer will be to make as big  `
+strStudent16  !str ` a profit as you can.                             `
+
+strStudent20  !str ` Lemonade                Student Instructions - 2 `
+strStudent21  !str ` Your family offers to give you $10 in order to   `
+strStudent22  !str ` get started. You argue that thanks to inflation, `
+strStudent23  !str ` those ten dollars won't buy what they used to.   `
+strStudent24  !str ` They agree, and grudgingly give you $40.         `
+strStudent25  !str ` When summer is over, you will have to pay back   `
+strStudent26  !str ` the $40, but you will not have to pay interest.  `
+
+strStudent30  !str ` Lemonade                Student Instructions - 3 `
+strStudent31  !str ` You will require three things to make lemonade:  `
+strStudent32  !str ` sugar, concentrated lemon juice, and cups. You   `
+strStudent33  !str ` will find information about the cost of each     `
+strStudent34  !str ` component at the bottom of the screen.           `
+strStudent35  !str ` You must decide how much of each you will buy,   `
+strStudent36  !str ` depending on the market outlook for the day.     `
+
+strStudent40  !str ` Lemonade                Student Instructions - 4 `
+strStudent41  !str ` Finally...`
+strStudent42  !str ` Don't always rely on the weather forecast. It    `
+strStudent43  !str ` comes from Environment Canada, and you know what `
+strStudent44  !str ` that means.`
+strStudent45  !str ` You should check the actual temperatures and     `
+strStudent46  !str ` make adjustments if conditions change.           `
+
+strStudent50  !str ` Lemonade                Student Instructions - 5 `
+strStudent51  !str `HINTS:`
+strStudent52  !str ` If you keep your price low, you'll sell more,    `
+strStudent53  !str ` but you will make less money on each sale.       `
+strStudent54  !str ` On hot or humid days, you will sell more and     `
+strStudent55  !str ` also be able to charge more per cup, because of  `
+strStudent56  !str ` increased demand. When the humidex is much       `
+strStudent57  !str ` higher than the temperature, it is a humid day.  `
+
+strTeacher10  !str ` Lemonade                Teacher Instructions - 1 `
+strTeacher11  !str ` To the best of my knowledge, this program is in  `
+strTeacher12  !str ` the public domain. If this is not the case,      `
+strTeacher13  !str ` please contact:`
+strTeacher14  !str ` Commodore Business Machines`
+strTeacher15  !str ` 3370 Pharmacy Ave.`
+strTeacher16  !str ` Agincourt, Ontario` 
+strTeacher17  !str ` Canada  M1W 2K4`
+strTeacher18  !str `Just kidding! :)`
+strTeacher19  !str `   You can email me at myles.skinner@gmail.com`
+
+strTeacher20  !str ` Lemonade                Teacher Instructions - 2 `
+strTeacher21  !str ` The original Lemonade Stand game was written by  `
+strTeacher22  !str ` Bob Jamison at MECC, the Minnesota Educational   `
+strTeacher23  !str ` Computing Consortium, in 1973. This 650Vue port  `
+strTeacher24  !str ` is loosely based on Commodore's port that was    `
+strTeacher25  !str ` part of their educational software collection.   ` 
+strTeacher26  !str `       https://github.com/drskinner/650vue        `
+
+strWelcome01  !str ` Lemonade                                 Welcome `
+strWelcome02  !str ` What is your name`
+strWelcome03  !str `, you will operate your stand`
+strWelcome04  !str ` for 10 weeks.`
+
+strGame01     !str ` Lemonade                           Week Number 0 `
+strGame02     !str `    _________________   `
+strGame03     !str `   /                 \  `
+strGame04     !str `  /|    LEMONADE     |\ `
+strGame05     !str ` / |          cents  | \`
+strGame06     !str `   |-----------------|  `
+strGame07     !str `   | __              |  `
+strGame08     !str `   | \ |]            |  `
+strGame09     !str `   | (_)    UUUUUUU  |  `
+strGame10     !str `   |#################|  `
+strGame11     !str `   | |)| | O | |.| |)|  `
+strGame12     !str `   |(| |{| | |o| |@| |  `
+strGame13     !str `   | |)| o |*| |(| |.|  `
+strGame14     !str `   |.|(| |}| | |)| | |  `
+strGame15     !str ` """""""""""""""""""""""""""""""""""""""""""""""" `
+strGame16     !str `You Have`
+strGame17     !str `Weekend Forecast`
+strGame18     !str `Today's Weather`
+strGame19     !str `kg sugar`
+strGame20     !str `L concentrate`
+strGame21     !str `cups`
+strGame22     !str `   0`
+strGame23     !str `   Final Week`
+
+strBuySugar1  !str ` Sugar is $`
+strBuySugar2  !str ` for a 5-kilogram bag.`
+strBuySugar3  !str `  How many bags do you want to buy? `
+strBuyLemon1  !str ` Concentrated lemon juice is $`
+strBuyLemon2  !str ` per litre.`
+strBuyLemon3  !str `  How many bottles do you want to buy? `
+strBuyCups1   !str ` Cups are $`
+strBuyCups2   !str ` for a bag of 100.`
+strBuyCups3   !str `  How many bags would you like to buy? `
+
+strForecast01     !str `Temps in the `
+strForecast02     !str `and `
+strForecastTemp   !str `low 20s `
+                  !str `mid 20s `
+                  !str `high 20s`
+                  !str `low 30s `
+                  !str `mid 30s `
+strForecastHumid  !str `low humidity.    `
+                  !str `moderately humid.`
+                  !str `very humid.`
+
+playerName   !res 0e

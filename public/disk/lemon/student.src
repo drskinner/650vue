@@ -1,0 +1,122 @@
+; ------------------------------------------------------------------------------
+; Show student instructions with pagination.
+; ------------------------------------------------------------------------------
+;
+; Student Instructions - Page 1
+;
+studentInstructions   jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent10
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent11
+                      jsr printStringWithCR
+                      @setString strStudent12
+                      jsr printStringWithCR
+                      @setString strStudent13
+                      jsr printStringWithCR
+                      @setString strStudent14
+                      jsr printStringWithCR
+                      @setString strStudent15
+                      jsr printStringWithCR
+                      @setString strStudent16
+                      jsr printStringWithCR
+                      jsr waitForSpace
+;
+; Student Instructions - Page 2
+;
+studentInstructions2  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent20
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent21
+                      jsr printStringWithCR
+                      @setString strStudent22
+                      jsr printStringWithCR
+                      @setString strStudent23
+                      jsr printStringWithCR
+                      @setString strStudent24
+                      jsr printStringWithCR
+                      @setString strStudent25
+                      jsr printStringWithCR
+                      @setString strStudent26
+                      jsr printStringWithCR
+                      jsr waitForSpace
+;
+; Student Instructions - Page 3
+;
+studentInstructions3  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent30
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent31
+                      jsr printStringWithCR
+                      @setString strStudent32
+                      jsr printStringWithCR
+                      @setString strStudent33
+                      jsr printStringWithCR
+                      @setString strStudent34
+                      jsr printStringWithCR
+                      @setString strStudent35
+                      jsr printStringWithCR
+                      @setString strStudent36
+                      jsr printStringWithCR
+                      jsr waitForSpace
+;
+; Student Instructions - Page 4
+;
+studentInstructions4  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent40
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent41
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strStudent42
+                      jsr printStringWithCR
+                      @setString strStudent43
+                      jsr printStringWithCR
+                      @setString strStudent44
+                      jsr printStringWithCR
+                      jsr doCarriageReturn
+                      @setString strStudent45
+                      jsr printStringWithCR
+                      @setString strStudent46
+                      jsr printStringWithCR
+                      jsr waitForSpace
+;
+; Student Instructions - Page 5
+;
+studentInstructions5  jsr clearAndHomeScreen
+                      jsr doCarriageReturn
+                      @setString strStudent50
+                      jsr printString
+                      @setString strSeparator
+                      jsr printStringWithCR
+                      @setString strStudent51
+                      lda #1
+                      sta :cursor_col
+                      jsr printStringRVS
+                      jsr doCarriageReturn
+                      jsr doCarriageReturn
+                      @setString strStudent52
+                      jsr printStringWithCR
+                      @setString strStudent53
+                      jsr printStringWithCR
+                      @setString strStudent54
+                      jsr printStringWithCR
+                      @setString strStudent55
+                      jsr printStringWithCR
+                      @setString strStudent56
+                      jsr printStringWithCR
+                      @setString strStudent57
+                      jsr printStringWithCR
+                      jsr waitForSpace
+                      jmp drawMainMenu
