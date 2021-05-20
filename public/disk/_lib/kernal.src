@@ -32,12 +32,12 @@
 > 00bc 11 11 11 12 12 12 12 12
 > 00c4 13 13 13 13
 
-:cursor_row     = $ca  ; cursor y position
-:cursor_col     = $cb  ; cursor x position
-:blink_enabled  = $cc  ; cursor blink enabled
-:blink_counter  = $cd  ; countdown timer
-:cursor_char    = $ce  ; character under cursor
-:blink_state    = $cf  ; cursor blink state
+:cursor_row     = $ca ; cursor y position
+:cursor_col     = $cb ; cursor x position
+:blink_enabled  = $cc ; cursor blink enabled
+:blink_counter  = $cd ; countdown timer
+:cursor_char    = $ce ; character under cursor
+:blink_state    = $cf ; cursor blink state
 
 > 00ca 00 00          ; cursor at "home" position
 > 00cc 00             ; blink off
@@ -63,9 +63,16 @@
 :ascii_null    = #$00
 :ascii_delete  = #$08
 :ascii_enter   = #$0d
-:ascii_space   = #$20
 
-* = $f000
+; set ASCII values for punctuation marks
+:ascii_apostrophe = #$27
+:ascii_colon      = #$3a
+:ascii_dollar     = #$24
+:ascii_dot        = #$2e
+:ascii_hash       = #$23
+:ascii_space      = #$20
+
+* = $e000
 ; ------------------------------------------------------------------------------
 ; Move cursor up. This move is very simple: move the cursor up one row, but
 ; not beyond the top edge.
@@ -348,7 +355,9 @@ testDelete          cmp :ascii_delete
                     sta :input_buffer,x     ; put 0 in input buffer at cursor
                     jmp inputClearLastKey
 
-testEnter           cmp :ascii_enter
+testEnter           cpx #0                  ; string length is 0
+                    beq testPrintable       ; ignore enter on empty string
+                    cmp :ascii_enter
                     bne testPrintable
                     lda :ascii_space
                     jsr plotCharAtCursor
@@ -383,3 +392,22 @@ terminateString     sta (:string_ptr),y
 exitInput           sta :zp_last_key        ; clear last key (AC is already zero)
                     sta :blink_enabled      ; disable cursor blink
                     rts
+
+; ------------------------------------------------------------------------------
+; Generate a random number.
+; :random_word+1 will contain a number in the range [0..:random_range]
+; ------------------------------------------------------------------------------
+getRandomNumber       lda #0
+                      sta :random_word
+                      sta :random_word+1
+                      ldx :random_range
+                      ldy :zp_random
+randomLoop            clc
+                      tya
+                      adc :random_word
+                      sta :random_word
+                      bcc nextRandomLoop
+                      inc :random_word+1
+nextRandomLoop        dex
+                      bne randomLoop
+                      rts

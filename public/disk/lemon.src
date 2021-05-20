@@ -1,400 +1,162 @@
 #INCLUDE _lib/kernal
+* = $f000
+#INCLUDE _lib/cursor_blink
 
 * = $2000
+#INCLUDE lemon/strings.src
 
-strBlankLine  !str `                                                  `
-strPressSpace !str `Press space to continue.`
-strSeparator  !str ` ------------------------------------------------ `
+;
+; Variables
+;
+:line_index     = $10
+:leading_zero   = $11
+:week_number    = $12
+:player_money   = $13 ; three bytes for BCD 9999.99
+:player_sugar   = $16 ; two bytes (unlikely to need both)
+:player_lemon   = $18
+:player_cups    = $1a
+:cached_money   = $1c ; to undo if player changes purchases
+:cached_sugar   = $1f
+:cached_lemon   = $21
+:cached_cups    = $23
+:fraction_sugar = $25 ; tracking partial kg usage
+:fraction_lemon = $26 ; tracking partial L usage
+:forecast_temp  = $27
+:forecast_humid = $28
+:cost_sugar     = $2a
+:cost_lemon     = $2c
+:cost_cups      = $2e
 
-strExitGame   !str `Thank you for playing lemonade!`
+:random_range   = $70
+:random_floor   = $71
+:random_word    = $72
 
-strMenu0      !str `           LEMONADE STAND - MAIN MENU             `
-strMenu1      !str `           1.   Begin Lemonade                    `
-strMenu2      !str `           2.   Student Instructions              `
-strMenu3      !str `           3.   Teacher Instructions              `
-strMenu4      !str `           4.   Exit Program                      `
-strMenu5      !str `             Press a number key (1-4)             `
+@SetReset $4000
 
-strStudent10  !str ` Lemonade                Student Instructions - 1 `
-strStudent11  !str ` You've decided to run a lemonade stand for 10    `
-strStudent12  !str ` Saturdays this summer in order to make some      `
-strStudent13  !str ` money. You do a little research, and soon learn  `
-strStudent14  !str ` that running a stand costs money.                `
-strStudent15  !str ` Your goal for the summer will be to make as big  `
-strStudent16  !str ` a profit as you can.                             `
-
-strStudent20  !str ` Lemonade                Student Instructions - 2 `
-strStudent21  !str ` Your family offers to give you $10 in order to   `
-strStudent22  !str ` get started. You argue that thanks to inflation, `
-strStudent23  !str ` those ten dollars won't buy what they used to.   `
-strStudent24  !str ` They agree, and grudgingly give you $40.         `
-strStudent25  !str ` When summer is over, you will have to pay back   `
-strStudent26  !str ` the $40, but you will not have to pay interest.  `
-
-strStudent30  !str ` Lemonade                Student Instructions - 3 `
-strStudent31  !str ` You will require three things to make lemonade:  `
-strStudent32  !str ` sugar, concentrated lemon juice, and cups. You   `
-strStudent33  !str ` will find information about the cost of each     `
-strStudent34  !str ` component at the bottom of the screen.           `
-strStudent35  !str ` You must decide how much of each you will buy,   `
-strStudent36  !str ` depending on the market outlook for the day.     `
-
-strStudent40  !str ` Lemonade                Student Instructions - 4 `
-strStudent41  !str ` Finally...`
-strStudent42  !str ` Don't always rely on the weather forecast. It    `
-strStudent43  !str ` comes from Environment Canada, and you know what `
-strStudent44  !str ` that means.`
-strStudent45  !str ` You should check the actual temperatures and     `
-strStudent46  !str ` make adjustments if conditions change.           `
-
-strStudent50  !str ` Lemonade                Student Instructions - 5 `
-strStudent51  !str `HINTS:`
-strStudent52  !str ` If you keep your price low, you'll sell more,    `
-strStudent53  !str ` but you will make less money on each sale.       `
-strStudent54  !str ` On hot or humid days, you will sell more and     `
-strStudent55  !str ` also be able to charge more per cup, because of  `
-strStudent56  !str ` increased demand. When the humidex is much       `
-strStudent57  !str ` higher than the temperature, it is a humid day.  `
-
-strTeacher10  !str ` Lemonade                Teacher Instructions - 1 `
-strTeacher11  !str ` To the best of my knowledge, this program is in  `
-strTeacher12  !str ` the public domain. If this is not the case,      `
-strTeacher13  !str ` please contact:`
-strTeacher14  !str ` Commodore Business Machines`
-strTeacher15  !str ` 3370 Pharmacy Ave.`
-strTeacher16  !str ` Agincourt, Ontario` 
-strTeacher17  !str ` Canada  M1W 2K4`
-strTeacher18  !str `Just kidding! :)`
-strTeacher19  !str `   You can email me at myles.skinner@gmail.com`
-
-strTeacher20  !str ` Lemonade                Teacher Instructions - 2 `
-strTeacher21  !str ` The original Lemonade Stand game was written by  `
-strTeacher22  !str ` Bob Jamison at MECC - the Minnesota Educational  `
-strTeacher23  !str ` Computing Consortium in 1973. The 650Vue version `
-strTeacher24  !str ` is loosely based on Commodore's port that was    `
-strTeacher25  !str ` part of their educational software collection.   ` 
-strTeacher26  !str `       https://github.com/drskinner/650vue        `
-
-
-@SetReset $3000
-
-* = $2fff
+* = $3fff
 resetProgramCounter   brk
-; ------------------------------------------------------------------------------
-; Draw main menu, wait for input, and handle branches.
-; ------------------------------------------------------------------------------
-drawMainMenu          jsr clearScreen
-                      jsr doCarriageReturn
-                      @setString strMenu0
-                      jsr printString
-                      @setString strSeparator
-                      jsr printString
-                      jsr doCarriageReturn
-                      jsr doCarriageReturn
-                      @setString strMenu1
-                      jsr printStringWithCR
-                      @setString strMenu2
-                      jsr printStringWithCR
-                      @setString strMenu3
-                      jsr printStringWithCR
-                      @setString strMenu4
-                      jsr printStringWithCR
-                      jsr doCarriageReturn
-                      @setString strSeparator
-                      jsr printStringWithCR
-                      jsr doCarriageReturn
-                      @setString strMenu5
-                      jsr printStringWithCR
 
-mainMenuClearKey      lda #0
-                      sta :zp_last_key          ; clear key before reading
-mainMenuGetKey        lda :zp_last_key
-                      beq mainMenuGetKey
-mainMenuOption2       cmp #$32
-                      bne mainMenuOption3
-                      jmp studentInstructions
-mainMenuOption3       cmp #$33
-                      bne mainMenuOption4
-                      jmp teacherInstructions
-mainMenuOption4       cmp #$34
-                      bne mainMenuClearKey
-                      jmp exitGame 
+@setIRQ $f000
+
+#INCLUDE lemon/title
+#INCLUDE lemon/menu
+#INCLUDE lemon/student
+#INCLUDE lemon/teacher
 
 ; ------------------------------------------------------------------------------
-; Show student instructions with pagination.
+; BEGIN GAME
+; Welcome screen. Get user's name.
 ; ------------------------------------------------------------------------------
-;
-; Student Instructions - Page 1
-;
-studentInstructions   jsr clearAndHomeScreen
+welcomeScreen         jsr clearAndHomeScreen
                       jsr doCarriageReturn
-                      @setString strStudent10
+                      @setString strWelcome01
                       jsr printString
                       @setString strSeparator
                       jsr printStringWithCR
-                      @setString strStudent11
-                      jsr printStringWithCR
-                      @setString strStudent12
-                      jsr printStringWithCR
-                      @setString strStudent13
-                      jsr printStringWithCR
-                      @setString strStudent14
-                      jsr printStringWithCR
-                      @setString strStudent15
-                      jsr printStringWithCR
-                      @setString strStudent16
-                      jsr printStringWithCR
-                      inc :cursor_row
-                      inc :cursor_row
-                      lda #13
-                      sta :cursor_col
-                      @setString strPressSpace
-                      jsr printStringRVS
-                      lda #0
-                      sta :zp_last_key          ; clear key before reading
-studentInstGetKey1    lda :zp_last_key
-                      cmp :ascii_space
-                      bne studentInstGetKey1
-;
-; Student Instructions - Page 2
-;
-studentInstructions2  jsr clearAndHomeScreen
-                      jsr doCarriageReturn
-                      @setString strStudent20
+                      @setString strWelcome02
                       jsr printString
-                      @setString strSeparator
-                      jsr printStringWithCR
-                      @setString strStudent21
-                      jsr printStringWithCR
-                      @setString strStudent22
-                      jsr printStringWithCR
-                      @setString strStudent23
-                      jsr printStringWithCR
-                      @setString strStudent24
-                      jsr printStringWithCR
-                      @setString strStudent25
-                      jsr printStringWithCR
-                      @setString strStudent26
-                      jsr printStringWithCR
-                      inc :cursor_row
-                      inc :cursor_row
-                      lda #13
-                      sta :cursor_col
-                      @setString strPressSpace
-                      jsr printStringRVS
-                      lda #0
-                      sta :zp_last_key          ; clear key before reading
-studentInstGetKey2    lda :zp_last_key
-                      cmp :ascii_space
-                      bne studentInstGetKey2
-;
-; Student Instructions - Page 3
-;
-studentInstructions3  jsr clearAndHomeScreen
+                      lda #$00
+                      sta :zp_last_key
+                      lda #$0d
+                      sta :input_length
+                      @setString playerName
+                      jsr inputWithPrompt
                       jsr doCarriageReturn
-                      @setString strStudent30
+                      jsr doCarriageReturn
+                      jsr moveCursorRight
+                      @setString playerName
                       jsr printString
-                      @setString strSeparator
+                      @setString strWelcome03
                       jsr printStringWithCR
-                      @setString strStudent31
+                      @setString strWelcome04
                       jsr printStringWithCR
-                      @setString strStudent32
-                      jsr printStringWithCR
-                      @setString strStudent33
-                      jsr printStringWithCR
-                      @setString strStudent34
-                      jsr printStringWithCR
-                      @setString strStudent35
-                      jsr printStringWithCR
-                      @setString strStudent36
-                      jsr printStringWithCR
-                      inc :cursor_row
-                      inc :cursor_row
-                      lda #13
-                      sta :cursor_col
-                      @setString strPressSpace
-                      jsr printStringRVS
-                      lda #0
-                      sta :zp_last_key          ; clear key before reading
-studentInstGetKey3    lda :zp_last_key
-                      cmp :ascii_space
-                      bne studentInstGetKey3
-;
-; Student Instructions - Page 4
-;
-studentInstructions4  jsr clearAndHomeScreen
-                      jsr doCarriageReturn
-                      @setString strStudent40
-                      jsr printString
-                      @setString strSeparator
-                      jsr printStringWithCR
-                      @setString strStudent41
-                      jsr printStringWithCR
-                      jsr doCarriageReturn
-                      @setString strStudent42
-                      jsr printStringWithCR
-                      @setString strStudent43
-                      jsr printStringWithCR
-                      @setString strStudent44
-                      jsr printStringWithCR
-                      jsr doCarriageReturn
-                      @setString strStudent45
-                      jsr printStringWithCR
-                      @setString strStudent46
-                      jsr printStringWithCR
-                      inc :cursor_row
-                      inc :cursor_row
-                      lda #13
-                      sta :cursor_col
-                      @setString strPressSpace
-                      jsr printStringRVS
-                      lda #0
-                      sta :zp_last_key          ; clear key before reading
-studentInstGetKey4    lda :zp_last_key
-                      cmp :ascii_space
-                      bne studentInstGetKey4
-;
-; Student Instructions - Page 5
-;
-studentInstructions5  jsr clearAndHomeScreen
-                      jsr doCarriageReturn
-                      @setString strStudent50
-                      jsr printString
-                      @setString strSeparator
-                      jsr printStringWithCR
-                      @setString strStudent51
-                      lda #1
-                      sta :cursor_col
-                      jsr printStringRVS
-                      jsr doCarriageReturn
-                      jsr doCarriageReturn
-                      @setString strStudent52
-                      jsr printStringWithCR
-                      @setString strStudent53
-                      jsr printStringWithCR
-                      @setString strStudent54
-                      jsr printStringWithCR
-                      @setString strStudent55
-                      jsr printStringWithCR
-                      @setString strStudent56
-                      jsr printStringWithCR
-                      @setString strStudent57
-                      jsr printStringWithCR
-                      lda #13
-                      sta :cursor_col
-                      @setString strPressSpace
-                      jsr printStringRVS
-                      lda #0
-                      sta :zp_last_key          ; clear key before reading
-studentInstGetKey5    lda :zp_last_key
-                      cmp :ascii_space
-                      bne studentInstGetKey5
-                      jmp drawMainMenu
+                      jsr waitForSpace
 
 ; ------------------------------------------------------------------------------
-; Show teacher instructions with pagination.
+; MAIN GAME
 ; ------------------------------------------------------------------------------
 ;
-; Teacher Instructions - Page 1
+; initialize game variables
 ;
+initializeVariables   lda #$0a
+                      sta :week_number
+                      lda #$40
+                      sta :player_money+1
+                      lda #$00
+                      sta :player_money
+                      sta :player_money+2
+                      sta :player_sugar
+                      sta :player_sugar+1
+                      sta :player_lemon
+                      sta :player_lemon+1
+                      sta :player_cups
+                      sta :player_cups+1
 ;
-; Student Instructions - Page 1
+; draw lemonade stand
 ;
-teacherInstructions   jsr clearAndHomeScreen
+drawStand             jsr clearAndHomeScreen
                       jsr doCarriageReturn
-                      @setString strTeacher10
+                      @setString strGame01
                       jsr printString
                       @setString strSeparator
-                      jsr printStringWithCR
-                      @setString strTeacher11
-                      jsr printStringWithCR
-                      @setString strTeacher12
-                      jsr printStringWithCR
-                      @setString strTeacher13
-                      jsr printStringWithCR
-                      jsr doCarriageReturn  
-                      @setString strTeacher14
-                      lda #10
-                      sta :cursor_col
-                      jsr printStringWithCR
-                      jsr doCarriageReturn
-                      @setString strTeacher15
-                      lda #15
-                      sta :cursor_col
-                      jsr printStringWithCR
-                      @setString strTeacher16
-                      lda #15
-                      sta :cursor_col
-                      jsr printStringWithCR
-                      @setString strTeacher17
-                      lda #15
-                      sta :cursor_col
-                      jsr printStringWithCR
-                      lda #18
-                      sta :cursor_row
-                      lda #13
-                      sta :cursor_col
-                      @setString strPressSpace
-                      jsr printStringRVS
-                      lda #0
-                      sta :zp_last_key          ; clear key before reading
-teacherInstGetKey0    lda :zp_last_key
-                      cmp :ascii_space
-                      bne teacherInstGetKey0
-                      lda #12
-                      sta :cursor_row
-                      lda #16
-                      sta :cursor_col
-                      lda :ascii_space
-                      jsr printCharAtCursor
-                      lda #17
-                      @setString strTeacher18
-                      jsr printStringRVS
-                      lda :ascii_space
-                      jsr printCharAtCursor
-                      jsr doCarriageReturn
-                      @setString strBlankLine
                       jsr printString
-                      @setString strTeacher19
-                      jsr printString
-                      lda #0
-                      sta :zp_last_key          ; clear key before reading
-teacherInstGetKey1    lda :zp_last_key
-                      cmp :ascii_space
-                      bne teacherInstGetKey1
+                      @setString strGame02
+                      jsr printStringWithCR
+                      lda #14
+                      sta :line_index
+drawStandLoop         clc
+                      lda :string_ptr
+                      adc #25
+                      sta :string_ptr
+                      bcc drawNextLine
+                      inc :string_ptr+1
+drawNextLine          dec :line_index
+                      beq drawStandName
+                      jsr printStringWithCR
+                      jmp drawStandLoop                     
+drawStandName         nop
 ;
-; Teacher Instructions - Page 2
+; draw additional text elements on screen
 ;
-teacherInstructions2  jsr clearAndHomeScreen
-                      jsr doCarriageReturn
-                      @setString strTeacher20
-                      jsr printString
-                      @setString strSeparator
-                      jsr printStringWithCR
-                      @setString strTeacher21
-                      jsr printStringWithCR
-                      @setString strTeacher22
-                      jsr printStringWithCR
-                      @setString strTeacher23
-                      jsr printStringWithCR
-                      @setString strTeacher24
-                      jsr printStringWithCR
-                      @setString strTeacher25
-                      jsr printStringWithCR
-                      inc :cursor_row
-                      @setString strTeacher26
-                      jsr printStringWithCR
-                      inc :cursor_row
-                      lda #13
-                      sta :cursor_col
-                      @setString strPressSpace
+drawStandText         @SetCursor 4,27
+                      @setString strGame16
                       jsr printStringRVS
-                      lda #0
-                      sta :zp_last_key          ; clear key before reading
-teacherInstGetKey2    lda :zp_last_key
-                      cmp :ascii_space
-                      bne teacherInstGetKey2
-                      jmp drawMainMenu
+                      lda :ascii_colon
+                      jsr plotCharAtCursor
+
+                      jsr drawWeekNumber
+
+                      @SetCursor 7,27
+                      lda #$b1
+                      jsr plotCharAtCursor
+                      inc :cursor_row
+                      lda #$b2
+                      jsr plotCharAtCursor
+                      inc :cursor_row
+                      lda #$b3
+                      jsr plotCharAtCursor
+
+                      jsr drawPlayerName
+
+                      @SetCursor 7,34
+                      @setString strGame19    ; kg sugar
+                      jsr printStringWithCR
+                      lda #34
+                      sta :cursor_col
+                      @setString strGame20    ; L concentrate
+                      jsr printStringWithCR
+                      lda #34
+                      sta :cursor_col
+                      @setString strGame21    ; cups
+                      jsr printStringWithCR
+
+                      jsr drawGameVariables
+                      jsr forecastWeather
+                      jsr randomizeCosts
+                      jsr purchaseSugar
+                      jsr purchaseLemon
+                      jsr purchaseCups
+      brk    
 
 ; ------------------------------------------------------------------------------
 ; Exit game, and reset PC for another run.
@@ -405,10 +167,481 @@ exitGame              jsr clearAndHomeScreen
                       jsr printString
                       jmp resetProgramCounter
 
+; ------------------------------------------------------------------------------
+; "Press space to continue" subroutine. Print message and wait for input.
+; ------------------------------------------------------------------------------
+waitForSpace          lda #18
+                      sta :cursor_row
+waitForSpaceRowSet    lda #13
+                      sta :cursor_col
+                      @setString strPressSpace
+                      jsr printStringRVS
+                      lda #0
+                      sta :zp_last_key          ; clear key before reading
+waitForSpaceGetKey    lda :zp_last_key
+                      cmp :ascii_space
+                      bne waitForSpaceGetKey
+                      lda #0
+                      sta :zp_last_key          ; clear key before exit
+                      rts
+
+; ------------------------------------------------------------------------------
+; Draw player's name, centered on sign, with `'s` tacked on.
+; ------------------------------------------------------------------------------
+drawPlayerName        lda #4
+                      sta :cursor_row
+                      sta :cursor_col      
+                      ldx #$ff
+nextNameCharacter     inx                       ; determine name length
+                      lda playerName,x
+                      bne nextNameCharacter
+                      inx                       ; add 2 for `'s`
+                      inx
+                      stx :xr_temp
+                      lda #17
+                      sbc :xr_temp              ; subtract length from 17
+                      lsr                       ; divide by 2
+                      tax                       ; move AC to index
+                      clc
+                      adc :cursor_col
+                      sta :cursor_col
+                      @setString playerName
+                      jsr printString
+                      lda :ascii_apostrophe
+                      jsr printCharAtCursor
+                      lda #$73
+                      jsr printCharAtCursor
+                      rts
+
+; ------------------------------------------------------------------------------
+; Draw week number at top of screen.
+; ------------------------------------------------------------------------------
+drawWeekNumber        lda #1
+                      sta :cursor_row
+                      lda :week_number
+                      cmp #10
+                      beq drawFinalWeek
+                      ldx #48
+                      stx :cursor_col
+                      ora #$30
+                      jsr plotCharAtCursor
+                      rts
+drawFinalWeek         lda #36
+                      sta :cursor_col
+                      @setString strGame23    ; "Final Week"
+                      jsr printString
+                      rts
+
+; ------------------------------------------------------------------------------
+; Draw player's money and ingredients.
+; ------------------------------------------------------------------------------
+drawGameVariables     jsr drawPlayerMoney
+                      jsr drawInventory
+                      rts
+
+; ------------------------------------------------------------------------------
+; Draw player's money total on main game screen. Set cursor location and fall
+; through to print player's money string at cursor.
+; ------------------------------------------------------------------------------
+drawPlayerMoney       lda #6
+                      sta :cursor_row
+                      lda #31
+                      sta :cursor_col
+;
+; print player's money at cursor, in $9999.99 format.
+;
+printMoneyString      lda :ascii_dollar
+                      jsr printCharAtCursor 
+                      lda #1
+                      sta :leading_zero
+                      lda :player_money+2
+                      jsr printTwoDigits
+                      lda :player_money+1
+                      jsr printTwoDigits
+                      lda :ascii_dot
+                      jsr printCharAtCursor
+                      lda :player_money
+                      jsr printTwoDigits
+                      rts
+
+; ------------------------------------------------------------------------------
+; Draw player's inventory: ingredient totals for sugar, concentrate, and cups.
+; Inventory quantities are little-endian BCD.
+; ------------------------------------------------------------------------------
+drawInventory         @SetCursor 7,29
+testSugar             lda :player_sugar       ; test for 0
+                      bne drawSugar           ; on non-zero, draw number normally
+                      lda :player_sugar+1     
+                      bne drawSugar
+                      @setString strGame22    ; otherwise, print `   0`
+                      jsr printString
+                      jmp testLemon
+drawSugar             ldx #$01
+                      stx :leading_zero
+                      lda :player_sugar+1     ; little-endian
+                      jsr printTwoDigits
+                      lda :player_sugar
+                      jsr printTwoDigits
+
+testLemon             inc :cursor_row
+                      lda #29
+                      sta :cursor_col
+                      lda :player_lemon
+                      bne drawLemon
+                      lda :player_lemon+1
+                      bne drawLemon
+                      @setString strGame22
+                      jsr printString
+                      jmp testCups
+drawLemon             ldx #$01
+                      stx :leading_zero
+                      lda :player_lemon+1
+                      jsr printTwoDigits
+                      lda :player_lemon
+                      jsr printTwoDigits
+
+testCups              inc :cursor_row
+                      lda #29
+                      sta :cursor_col
+                      lda :player_cups
+                      bne drawCups
+                      lda :player_cups+1
+                      bne drawCups
+                      @setString strGame22
+                      jsr printString
+                      rts
+drawCups              ldx #$01
+                      stx :leading_zero
+                      lda :player_cups+1
+                      jsr printTwoDigits
+                      lda :player_cups
+                      jsr printTwoDigits
+                      rts
+
+; ------------------------------------------------------------------------------
+; Print two BCD digits at cursor position.
+; AC - byte to print.
+; ------------------------------------------------------------------------------
+printTwoDigits        pha
+                      lsr
+                      lsr
+                      lsr
+                      lsr
+                      jsr printOneDigit
+                      pla
+                      and #$0f
+                      jsr printOneDigit
+                      rts
+; ------------------------------------------------------------------------------
+; Print one digits at cursor position.
+; AC - digit to print. Handles leading zero suppression.
+; ------------------------------------------------------------------------------                      
+printOneDigit         ora #$30
+                      ldx :leading_zero
+                      beq printDigitOrSpace   ; if leading_zero is OFF
+                      cmp #$30                ; is AC :ascii_zero?
+                      beq blankLeadingZero
+                      ldx #$00
+                      stx :leading_zero
+                      jmp printDigitOrSpace
+blankLeadingZero      lda :ascii_space
+printDigitOrSpace     jsr printCharAtCursor
+                      rts
+
+; ------------------------------------------------------------------------------
+; Make a weather prediction. Temperature and rough humidity.
+; ------------------------------------------------------------------------------
+forecastWeather       @SetCursor 11,27
+                      @setString strGame17        ; "forecast" string
+                      jsr printStringRVS
+                      lda :ascii_colon
+                      jsr plotCharAtCursor
+                      lda #$b1
+
+                      @SetCursor 13,27
+                      @setString strForecast01
+                      jsr printString
+
+                      lda #5                      ; random number [0..4]
+                      sta :random_range
+                      jsr getRandomNumber
+                      @setString strForecastTemp
+                      ldx :random_word+1
+                      beq printForecastTemp
+loopForecastTemp      lda #9
+                      clc
+                      adc :string_ptr
+                      sta :string_ptr
+                      bcc nextForecastTemp
+                      inc :string_ptr+1
+nextForecastTemp      dex
+                      bne loopForecastTemp
+printForecastTemp     jsr printStringWithCR
+                      
+                      lda #27
+                      sta :cursor_col
+                      @setString strForecast02    ; "and "
+                      jsr printString
+
+                      lda #3                      ; random number [0..2]
+                      sta :random_range
+                      jsr getRandomNumber
+                      @setString strForecastHumid
+                      ldx :random_word+1
+                      beq printForecastHumid
+loopForecastHumid     lda #18
+                      clc
+                      adc :string_ptr
+                      sta :string_ptr
+                      bcc nextForecastHumid
+                      inc :string_ptr+1
+nextForecastHumid     dex
+                      bne loopForecastHumid
+printForecastHumid    jsr printStringWithCR
+                      rts
+
+; ------------------------------------------------------------------------------
+; Randomize cost of sugar, lemon concentrate, and cups. (little-endian BCD)
+; ------------------------------------------------------------------------------
+randomizeCosts        lda #$03
+                      sta :cost_sugar+1
+                      lda #$96
+                      sta :cost_sugar
+                      lda #37
+                      sta :random_range
+                      jsr getRandomNumber
+                      lda :random_word+1
+                      sed
+                      clc
+                      adc :cost_sugar
+                      sta :cost_sugar
+                      cld
+                      bcc randomizeLemon
+                      inc :cost_sugar+1
+
+randomizeLemon        lda #$02
+                      sta :cost_lemon+1
+                      lda #$76
+                      sta :cost_lemon
+                      lda #37
+                      sta :random_range
+                      jsr getRandomNumber
+                      lda :random_word+1
+                      sed
+                      clc
+                      adc :cost_lemon
+                      sta :cost_lemon
+                      cld
+                      bcc randomizeCups
+                      inc :cost_lemon+1
+
+randomizeCups         lda #$03
+                      sta :cost_cups+1
+                      lda #$60
+                      sta :cost_cups
+                      lda #37
+                      sta :random_range
+                      jsr getRandomNumber
+                      lda :random_word+1
+                      sed
+                      clc
+                      adc :cost_cups
+                      sta :cost_cups
+                      cld
+                      bcc exitRandomize
+                      inc :cost_cups+1
+exitRandomize         rts
+
+; ------------------------------------------------------------------------------
+; Purchase sugar.
+; ------------------------------------------------------------------------------
+purchaseSugar         jsr clearInputWindow
+                      @SetCursor $11,$02
+                      lda #$b1
+                      jsr printCharAtCursor
+                      @setString strBuySugar1
+                      jsr printString
+                      lda :cost_sugar+1
+                      and #$0f
+                      jsr printOneDigit
+                      lda :ascii_dot
+                      jsr printCharAtCursor
+                      lda :cost_sugar
+                      jsr printTwoDigits
+                      @setString strBuySugar2
+                      jsr printStringWithCR
+                      @setString strBuySugar3
+                      jsr printString
+
+; TODO: check to see if player can afford
+; update cash, add to inventory instead of STA
+                      jsr lemonNumberInput
+                      lda :input_buffer
+                      sta :player_sugar
+                      jsr drawInventory
+                      rts
+
+; ------------------------------------------------------------------------------
+; Purchase concentrated lemon juice.
+; ------------------------------------------------------------------------------
+purchaseLemon         jsr clearInputWindow
+                      @SetCursor $11,$02
+                      lda #$b2
+                      jsr printCharAtCursor
+                      @setString strBuyLemon1
+                      jsr printString
+                      lda :cost_lemon+1
+                      and #$0f
+                      jsr printOneDigit
+                      lda :ascii_dot
+                      jsr printCharAtCursor
+                      lda :cost_lemon
+                      jsr printTwoDigits
+                      @setString strBuyLemon2
+                      jsr printStringWithCR
+                      @setString strBuyLemon3
+                      jsr printString
+
+; TODO: check to see if player can afford
+; update cash, add to inventory instead of STA
+                      jsr lemonNumberInput
+                      lda :input_buffer
+                      sta :player_lemon
+                      jsr drawInventory
+                      rts
+
+; ------------------------------------------------------------------------------
+; Purchase cups.
+; ------------------------------------------------------------------------------
+purchaseCups          jsr clearInputWindow
+                      @SetCursor $11,$02
+                      lda #$b3
+                      jsr printCharAtCursor
+                      @setString strBuyCups1
+                      jsr printString
+                      lda :cost_cups+1
+                      and #$0f
+                      jsr printOneDigit
+                      lda :ascii_dot
+                      jsr printCharAtCursor
+                      lda :cost_cups
+                      jsr printTwoDigits
+                      @setString strBuyCups2
+                      jsr printStringWithCR
+                      @setString strBuyCups3
+                      jsr printString
+
+; TODO: check to see if player can afford
+; update cash, add to inventory instead of STA
+; remember cups will increment (bags * 100)
+                      jsr lemonNumberInput
+                      lda :input_buffer
+                      sta :player_cups+1
+                      jsr drawInventory
+                      rts
+
+; ------------------------------------------------------------------------------
+; input number from keyboard
+; :string_ptr   - address of string to write
+; :input_prompt - character for prompt
+; :input_length - always $02 in lemonade
+; set :cursor_row and :cursor_col before calling
+; ------------------------------------------------------------------------------
+lemonNumberInput    lda #$01
+                    sta :blink_enabled
+                    ldx #$00
+lemonReadKeyboard   lda :zp_last_key
+                    beq lemonReadKeyboard
+
+lemonTestDelete     cmp :ascii_delete                    
+                    bne lemonTestEnter      ; check another match
+                    cpx #$00
+                    beq lemonClearLastKey   ; don't backspace beyond 0                    
+                    stx :xr_temp
+                    jsr doBackspace
+                    ldx :xr_temp
+                    dex
+                    sta :input_buffer,x     ; put 0 in input buffer at cursor
+                    jmp lemonClearLastKey
+
+lemonTestEnter      cpx #0                  ; string length is 0
+                    beq lemonTestNumeric    ; ignore enter on empty string
+                    cmp :ascii_enter
+                    bne lemonTestNumeric
+                    txa                     ; save buffer pointer
+                    pha                     ; on stack
+                    lda :ascii_space
+                    jsr plotCharAtCursor
+                    jmp moveBufferToNumber
+
+lemonTestNumeric    cmp #$30    
+                    bmi lemonClearLastKey
+                    cmp #$3a
+                    bcs lemonClearLastKey
+                    cpx #$02                ; max length for number
+                    beq lemonClearLastKey
+                    stx :xr_temp
+                    lda :zp_last_key
+                    sta :input_buffer,x     ; transfer character to buffer
+                    jsr printCharAtCursor
+                    ldx :xr_temp
+                    inx
+
+lemonClearLastKey   lda #$00
+                    sta :zp_last_key
+                    jmp lemonReadKeyboard                    
+                    
+moveBufferToNumber  pla                     ; get buffer pointer back from stack
+                    tax
+                    lda :input_buffer       ; grab first digit
+                    and #$0f                ; mask to discard high nybble
+                    cpx #$02                ; is there a second digit?
+                    bne exitInputNumber
+                    asl                     ; shift digit to high nybble
+                    asl
+                    asl
+                    asl
+                    sta :input_buffer       ; stash first digit
+                    lda :input_buffer+1     ; grab next digit
+                    and #$0f
+                    clc
+                    adc :input_buffer
+
+exitInputNumber     sta :input_buffer
+                    lda #$00
+                    sta :zp_last_key
+                    sta :blink_enabled
+                    rts
+
+; ------------------------------------------------------------------------------
+; Clear the input window at the bottom of the screen.
+; ------------------------------------------------------------------------------
+clearInputWindow    ldx #99
+                    lda :ascii_space
+loopClearWindow     sta $1352,x
+                    dex
+                    bpl loopClearWindow
+                    rts
 
 
-
-
+* = $5000
+  lda #0
+  sta :cursor_row
+  sta :cursor_col
+  lda #$10
+  sta :random_range
+  ldy #$ff
+moar  sty :yr_temp
+  jsr getRandomNumber
+  lda :random_word+1
+  ora #$30
+  jsr printCharAtCursor
+  ldx :random_word+1
+  inc $1200,x
+  ldy :yr_temp
+  dey
+  bne moar
+  brk
 
 
 
@@ -499,3 +732,5 @@ div2      pla
           bne dLoop
           sta :ext
           rts
+
+

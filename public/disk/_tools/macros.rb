@@ -53,6 +53,20 @@ class Macros
   end
 
   #
+  # Set cursor position at screen coordinates
+  # Usage: @SetCursor <row>,<col>
+  # Coordinates may be decimal (no prefix) or hex ($ prefix)
+  #
+  # On exit: AC == ??; XR, YR unchanged 
+  #
+  def set_cursor(label, args)
+    coordinates = args.split(',')
+    @object_lines << "#{label} lda ##{coordinates[0]}"
+    @object_lines << "  sta :cursor_row"
+    @object_lines << "  lda ##{coordinates[1]}"
+    @object_lines << "  sta :cursor_col"
+  end
+
   # Disable interrupts and set interrupt vector
   # Usage: @SetIRQ $<address>
   #
